@@ -26,6 +26,21 @@ export {
 export { detectAnomalies, baselineFor } from './engine/anomaly';
 export { assess, type Assessment } from './engine/forecast';
 
+// sync: black-box outbox that holds everything during LOS and sends it at AOS
+export {
+  MemoryOutboxStore,
+  MockGroundStore,
+  idempotencyKey,
+  enqueue,
+  flushOutbox,
+  mockTransport,
+  isLinkUp,
+  type OutboxItem,
+  type OutboxStore,
+  type Transport,
+  type FlushResult,
+} from './sync/outbox';
+
 // design: brand tokens shared by mobile and web
 export * from './design/tokens';
 export { contrastRatio } from './design/contrast';
