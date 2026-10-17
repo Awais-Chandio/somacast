@@ -4,16 +4,23 @@ import { MemoryOutboxStore } from '@somacast/core';
 import { useTodayController, type TodayController } from './useTodayController';
 
 // Renders the hook inside a tiny component and keeps the latest result.
-async function renderController(outbox = new MemoryOutboxStore()) {
+async function renderController(outbox = new MemoryOutboxStore(), epoch = 0) {
   const ref: { current: TodayController | null } = { current: null };
-  function Probe() {
-    ref.current = useTodayController(outbox);
+  function Probe({ logEpoch }: { logEpoch: number }) {
+    ref.current = useTodayController(outbox, undefined, logEpoch);
     return null;
   }
+  let root: ReactTestRenderer.ReactTestRenderer | undefined;
   await ReactTestRenderer.act(() => {
-    ReactTestRenderer.create(<Probe />);
+    root = ReactTestRenderer.create(<Probe logEpoch={epoch} />);
   });
-  return () => ref.current as TodayController;
+  const get = () => ref.current as TodayController;
+  // Re-renders with a new log epoch, as a demo reset does.
+  get.setEpoch = (logEpoch: number) =>
+    ReactTestRenderer.act(() => {
+      root!.update(<Probe logEpoch={logEpoch} />);
+    });
+  return get;
 }
 
 const act = (fn: () => void) => ReactTestRenderer.act(async () => fn());
@@ -61,5 +68,14 @@ describe('useTodayController', () => {
     await act(() => c().nextDay()); // back to a day already logged
     await act(() => c().prevDay());
     expect(outbox.pendingCount()).toBe(afterNewDay);
+  });
+
+  it('a new log epoch (demo reset) logs the day on screen again', async () => {
+    const outbox = new MemoryOutboxStore();
+    const c = await renderController(outbox);
+    const n = outbox.pendingCount();
+    outbox.markSent(outbox.pending(n).map(i => i.key)); // what a reset does
+    await c.setEpoch(1);
+    expect(outbox.pendingCount()).toBe(n);
   });
 });

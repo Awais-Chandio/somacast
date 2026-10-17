@@ -75,6 +75,15 @@ describe('SqliteOutboxStore', () => {
     expect(store.pendingCount()).toBe(0);
   });
 
+  it('countKeysLike counts backlog keys; clear empties the outbox', () => {
+    const store = openOutboxStore();
+    for (const e of entries(3, 'backlog-r1-')) enqueue(store, e);
+    for (const e of entries(2, 'normal-C1-')) enqueue(store, e);
+    expect(store.countKeysLike('%:reading:backlog-%')).toBe(3);
+    store.clear();
+    expect(store.pendingCount()).toBe(0);
+  });
+
   it('restart: a new store on the same file still has the backlog', () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'somacast-outbox-'));
     try {

@@ -68,6 +68,20 @@ export class SqliteOutboxStore implements OutboxStore {
     return Number(rows[0]?.n ?? 0);
   }
 
+  // LIKE pattern on the idempotency key, e.g. '%:reading:backlog-%'.
+  countKeysLike(pattern: string): number {
+    const { rows } = this.db.executeSync(
+      'SELECT COUNT(*) AS n FROM outbox WHERE key LIKE ?',
+      [pattern],
+    );
+    return Number(rows[0]?.n ?? 0);
+  }
+
+  // Demo reset only. Real black-box entries are never deleted before the ground has them.
+  clear(): void {
+    this.db.executeSync('DELETE FROM outbox');
+  }
+
   // Runs many writes as one transaction: one disk commit instead of one per row.
   batch(fn: () => void): void {
     this.db.executeSync('BEGIN');

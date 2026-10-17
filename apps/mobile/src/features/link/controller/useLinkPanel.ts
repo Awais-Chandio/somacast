@@ -1,9 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { MockGroundStore, mockTransport } from '@somacast/core';
 import {
   BACKLOG_SIZE,
   backlogEntries,
+  clearOutbox,
   fillOutbox,
+  outboxBreakdown,
   syncOutbox,
   type Link,
   type LocalOutbox,
@@ -21,41 +23,39 @@ export function useLinkPanel(
 ) {
   const [link, setLink] = useState<Link>('LOS'); // the app always starts in LOS
   const linkRef = useRef<Link>('LOS');
-  const [pending, setPending] = useState(() => store.pendingCount());
+  const [outbox, setOutbox] = useState(() => outboxBreakdown(store));
   const [status, setStatus] = useState<SyncStatus>({ phase: 'idle' });
   const [filling, setFilling] = useState(false);
   const fillingRef = useRef(false);
   const syncing = useRef(false);
-  const [ground] = useState(() => new MockGroundStore());
+  const ground = useRef(new MockGroundStore());
+  // Bumped by a reset so the Today screen logs the day it is showing again.
+  const [resetEpoch, setResetEpoch] = useState(0);
+  const { random } = opts;
 
-  const transport = useMemo(
-    () =>
-      mockTransport(ground, {
-        ...LINK_FAULTS,
-        linkUp: () => linkRef.current === 'AOS',
-        random: opts.random,
-      }),
-    [ground, opts.random],
-  );
-
-  const refresh = useCallback(() => setPending(store.pendingCount()), [store]);
+  const refresh = useCallback(() => setOutbox(outboxBreakdown(store)), [store]);
 
   const sync = useCallback(async () => {
     if (syncing.current) return; // the running sync keeps going while the link is up
     syncing.current = true;
+    const linkUp = () => linkRef.current === 'AOS';
     try {
-      await syncOutbox(store, transport, {
-        isLinkUp: () => linkRef.current === 'AOS',
-        groundRows: () => ground.size(),
-        onStatus: s => {
-          setStatus(s);
-          refresh();
+      await syncOutbox(
+        store,
+        mockTransport(ground.current, { ...LINK_FAULTS, linkUp, random }),
+        {
+          isLinkUp: linkUp,
+          ground: ground.current,
+          onStatus: s => {
+            setStatus(s);
+            refresh();
+          },
         },
-      });
+      );
     } finally {
       syncing.current = false;
     }
-  }, [store, transport, ground, refresh]);
+  }, [store, random, refresh]);
 
   // Returns the sync promise so tests (and callers) can await it.
   const toggleLink = useCallback(async () => {
@@ -86,15 +86,29 @@ export function useLinkPanel(
     [store, refresh],
   );
 
+  // Demo only, LOS only: empties the outbox and the mock ground so the demo can run again.
+  const resetDemo = useCallback(() => {
+    if (linkRef.current !== 'LOS' || fillingRef.current) return;
+    clearOutbox(store);
+    ground.current = new MockGroundStore();
+    setStatus({ phase: 'idle' });
+    setResetEpoch(e => e + 1);
+    refresh();
+  }, [store, refresh]);
+
+  const demoAllowed = link === 'LOS' && !filling;
   return {
     link,
-    pending,
+    outbox,
     status,
     filling,
-    canFill: link === 'LOS' && !filling,
-    groundRows: () => ground.size(),
+    canFill: demoAllowed,
+    canReset: demoAllowed,
+    resetEpoch,
+    groundRows: () => ground.current.size(),
     toggleLink,
     fillBacklog,
+    resetDemo,
     refresh,
   };
 }

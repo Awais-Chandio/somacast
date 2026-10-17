@@ -15,7 +15,12 @@ const MAX_DAY = MISSION.days - 1;
 // Controller: owns the Today screen's state and user actions.
 // No layout here (that is the view) and no health logic (that is the model / @somacast/core).
 // Every day the screen shows is also written to the black-box outbox; onLogged lets the link panel recount.
-export function useTodayController(outbox: OutboxStore, onLogged?: () => void) {
+// A new logEpoch (after a demo reset) logs the day on screen again.
+export function useTodayController(
+  outbox: OutboxStore,
+  onLogged?: () => void,
+  logEpoch = 0,
+) {
   const [scenario, setScenario] = useState<ScenarioKey>('normal');
   const [crewId, setCrewId] = useState(DEFAULT_CREW_ID);
   const [day, setDay] = useState(MAX_DAY);
@@ -33,7 +38,7 @@ export function useTodayController(outbox: OutboxStore, onLogged?: () => void) {
   useEffect(() => {
     for (const e of logEntries) enqueue(outbox, e); // same day again = same keys = no-op
     onLogged?.();
-  }, [outbox, logEntries, onLogged]);
+  }, [outbox, logEntries, onLogged, logEpoch]);
 
   const prevDay = useCallback(() => setDay(d => Math.max(0, d - 1)), []);
   const nextDay = useCallback(() => setDay(d => Math.min(MAX_DAY, d + 1)), []);

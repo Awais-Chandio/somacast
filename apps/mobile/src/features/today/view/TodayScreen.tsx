@@ -18,7 +18,7 @@ import { TodayHeader } from './TodayHeader';
 export function TodayScreen() {
   const outbox = getDeviceOutbox();
   const link = useLinkPanel(outbox);
-  const c = useTodayController(outbox, link.refresh);
+  const c = useTodayController(outbox, link.refresh, link.resetEpoch);
   const { view } = c;
 
   return (

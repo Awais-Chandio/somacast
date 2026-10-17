@@ -57,32 +57,51 @@ export function LinkPanel({ link, crewId }: Props) {
           <Text style={styles.toggleText}>Link: {link.link}</Text>
         </Pressable>
         <Text style={styles.count} accessibilityLiveRegion="polite">
-          {outboxText(link.pending)}
+          {outboxText(link.outbox)}
         </Text>
       </View>
 
-      <Pressable
-        onPress={() => link.fillBacklog(crewId)}
-        disabled={!link.canFill}
-        accessibilityRole="button"
-        accessibilityLabel={`Demo: fill ${formatCount(
-          BACKLOG_SIZE,
-        )}-item backlog`}
-        accessibilityHint="Works only in LOS"
-        accessibilityState={{ disabled: !link.canFill, busy: link.filling }}
-        style={({ pressed }) => [
-          styles.fill,
-          !link.canFill && styles.disabled,
-          pressed && styles.pressed,
-        ]}
-      >
-        <Text style={styles.fillText}>
-          {link.filling
-            ? 'FILLING BACKLOG…'
-            : `FILL ${formatCount(BACKLOG_SIZE)}-ITEM BACKLOG`}
-        </Text>
-        {link.link === 'AOS' && <Text style={styles.fillHint}>LOS only</Text>}
-      </Pressable>
+      <View style={styles.row}>
+        <Pressable
+          onPress={() => link.fillBacklog(crewId)}
+          disabled={!link.canFill}
+          accessibilityRole="button"
+          accessibilityLabel={`Demo: fill ${formatCount(
+            BACKLOG_SIZE,
+          )}-item backlog`}
+          accessibilityHint="Works only in LOS"
+          accessibilityState={{ disabled: !link.canFill, busy: link.filling }}
+          style={({ pressed }) => [
+            styles.fill,
+            !link.canFill && styles.disabled,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={styles.fillText}>
+            {link.filling
+              ? 'FILLING BACKLOG…'
+              : `FILL ${formatCount(BACKLOG_SIZE)}-ITEM BACKLOG`}
+          </Text>
+        </Pressable>
+        <Pressable
+          onPress={link.resetDemo}
+          disabled={!link.canReset}
+          accessibilityRole="button"
+          accessibilityLabel="Demo: reset outbox and ground"
+          accessibilityHint="Works only in LOS"
+          accessibilityState={{ disabled: !link.canReset }}
+          style={({ pressed }) => [
+            styles.reset,
+            !link.canReset && styles.disabled,
+            pressed && styles.pressed,
+          ]}
+        >
+          <Text style={styles.resetText}>RESET DEMO</Text>
+        </Pressable>
+      </View>
+      {link.link === 'AOS' && (
+        <Text style={styles.hint}>Fill and reset work in LOS only.</Text>
+      )}
 
       {banner && (
         <View style={styles.banner} accessible accessibilityLiveRegion="polite">
@@ -119,6 +138,7 @@ const styles = StyleSheet.create({
   toggleText: { ...ff.bodyBold, color: theme.text, fontSize: fs.body },
   count: { ...ff.bodySemi, color: theme.text, fontSize: fs.body, flex: 1 },
   fill: {
+    flex: 1,
     minHeight: size.minTouch,
     paddingHorizontal: 12,
     flexDirection: 'row',
@@ -130,7 +150,16 @@ const styles = StyleSheet.create({
     borderColor: theme.accent,
   },
   fillText: { ...ff.bodyBold, color: theme.accent, fontSize: fs.small },
-  fillHint: { ...ff.body, color: theme.text, fontSize: fs.small },
+  reset: {
+    minHeight: size.minTouch,
+    paddingHorizontal: 12,
+    justifyContent: 'center',
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: theme.text,
+  },
+  resetText: { ...ff.bodyBold, color: theme.text, fontSize: fs.small },
+  hint: { ...ff.body, color: theme.textSecondary, fontSize: fs.small },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },
   banner: { flexDirection: 'row', alignItems: 'center', gap: 8 },
