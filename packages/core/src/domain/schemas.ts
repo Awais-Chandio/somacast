@@ -96,6 +96,19 @@ export const UplinkNoteSchema = z.object({
   text: z.string().min(1),
 });
 
+// A signed-in account (Supabase profiles row). Crew accounts belong to exactly one crew;
+// a flight surgeon has no crew and reads every crew's log.
+export const ProfileSchema = z
+  .object({
+    userId: z.string().min(1),
+    role: z.enum(['crew', 'surgeon']),
+    crewId: z.string().min(1).nullable(),
+    displayName: z.string().nullable(),
+  })
+  .refine(p => p.role !== 'crew' || p.crewId !== null, {
+    message: 'a crew account needs a crew_id',
+  });
+
 export type Crew = z.infer<typeof CrewSchema>;
 export type DailyReading = z.infer<typeof ReadingSchema>;
 export type Effect = z.infer<typeof EffectSchema>;
@@ -105,3 +118,4 @@ export type Forecast = z.infer<typeof ForecastSchema>;
 export type LogEntry = z.infer<typeof LogEntrySchema>;
 export type Handoff = z.infer<typeof HandoffSchema>;
 export type UplinkNote = z.infer<typeof UplinkNoteSchema>;
+export type Profile = z.infer<typeof ProfileSchema>;

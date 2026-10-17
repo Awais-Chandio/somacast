@@ -1,2 +1,7 @@
 .DS_Store
 node_modules/
+
+# Secrets and local config: never commit. Templates (*.env.example) are committed.
+.env
+.env.*
+!.env.example

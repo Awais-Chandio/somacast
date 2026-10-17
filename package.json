@@ -7,6 +7,12 @@
     "android": "npm --prefix apps/mobile run android",
     "test": "npm run test:core && npm run test:mobile",
     "test:core": "npm --prefix packages/core test",
-    "test:mobile": "npm --prefix apps/mobile test"
+    "test:mobile": "npm --prefix apps/mobile test",
+    "rls-check": "node scripts/rls-check.mjs",
+    "db:push": "supabase db push"
+  },
+  "devDependencies": {
+    "@supabase/supabase-js": "^2.118.0",
+    "supabase": "^2.121.0"
   }
 }
