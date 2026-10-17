@@ -2,16 +2,24 @@ import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import { MemoryOutboxStore } from '@somacast/core';
 import { useTodayController, type TodayController } from './useTodayController';
+import { demoMissionFor, type DemoMission } from '../../../config/mission';
 
 // Renders the hook inside a tiny component and keeps the latest result.
 async function renderController(
   outbox = new MemoryOutboxStore(),
   epoch = 0,
   lockedCrewId?: string,
+  mission?: DemoMission,
 ) {
   const ref: { current: TodayController | null } = { current: null };
   function Probe({ logEpoch }: { logEpoch: number }) {
-    ref.current = useTodayController(outbox, undefined, logEpoch, lockedCrewId);
+    ref.current = useTodayController(
+      outbox,
+      undefined,
+      logEpoch,
+      lockedCrewId,
+      mission,
+    );
     return null;
   }
   let root: ReactTestRenderer.ReactTestRenderer | undefined;
@@ -93,5 +101,86 @@ describe('useTodayController', () => {
     const crews = outbox.pending(100).map(i => i.entry.crewId);
     expect(crews.length).toBeGreaterThan(0);
     expect(new Set(crews)).toEqual(new Set(['C2']));
+  });
+
+  describe('signed in: whole mission history', () => {
+    const readingDays = (outbox: MemoryOutboxStore) =>
+      outbox
+        .pending(5000)
+        .filter(i => i.entry.kind === 'reading')
+        .map(i => i.entry.payload.day as number)
+        .sort((a, b) => a - b);
+
+    it('Kenji: blackout decline locked, opens on day 75 in Storm, days 0..75 recorded', async () => {
+      const outbox = new MemoryOutboxStore();
+      const c = await renderController(
+        outbox,
+        0,
+        'C2',
+        demoMissionFor('kenji@somacast.test'),
+      );
+      expect(c().scenario).toBe('blackoutDecline');
+      expect(c().scenarios.map(s => s.key)).toEqual(['blackoutDecline']);
+      expect(c().day).toBe(75);
+      expect(c().view.state).toBe('storm');
+      expect(readingDays(outbox)).toEqual(
+        Array.from({ length: 76 }, (_, d) => d),
+      );
+      await act(() => c().selectScenario('normal'));
+      expect(c().scenario).toBe('blackoutDecline'); // the account's scenario
+    });
+
+    it('Maya: normal, day 89, 90 readings; a re-render or revisit adds 0', async () => {
+      const outbox = new MemoryOutboxStore();
+      const c = await renderController(
+        outbox,
+        0,
+        'C1',
+        demoMissionFor('maya@somacast.test'),
+      );
+      expect(c().day).toBe(89);
+      expect(readingDays(outbox)).toHaveLength(90);
+      const n = outbox.pendingCount();
+      await act(() => c().prevDay());
+      await act(() => c().nextDay());
+      await c.setEpoch(0);
+      expect(outbox.pendingCount()).toBe(n);
+    });
+
+    it('after a demo reset the history is recorded again', async () => {
+      const outbox = new MemoryOutboxStore();
+      const c = await renderController(
+        outbox,
+        0,
+        'C2',
+        demoMissionFor('kenji@somacast.test'),
+      );
+      const n = outbox.pendingCount();
+      outbox.markSent(outbox.pending(n).map(i => i.key));
+      await c.setEpoch(1);
+      expect(outbox.pendingCount()).toBe(n);
+    });
+
+    it('offline (no mission): only the days on screen are logged', async () => {
+      const outbox = new MemoryOutboxStore();
+      await renderController(outbox);
+      expect(readingDays(outbox)).toEqual([89]);
+    });
+  });
+
+  it('demoMissionFor: known accounts, case-insensitive, default for others', () => {
+    expect(demoMissionFor('Kenji@Somacast.test')).toEqual({
+      scenario: 'blackoutDecline',
+      day: 75,
+    });
+    expect(demoMissionFor('maya@somacast.test')).toEqual({
+      scenario: 'normal',
+      day: 89,
+    });
+    expect(demoMissionFor('someone@else.test')).toEqual({
+      scenario: 'normal',
+      day: 89,
+    });
+    expect(demoMissionFor(null).scenario).toBe('normal');
   });
 });

@@ -1,7 +1,9 @@
 import {
   assess,
+  enqueue,
   indexByDay,
   type LogEntry,
+  type OutboxStore,
   type SimulationResult,
 } from '@somacast/core';
 
@@ -39,4 +41,32 @@ export function blackBoxEntries(
     });
   }
   return out;
+}
+
+// The whole mission so far: blackBoxEntries for every day 0..throughDay. Same stable ids as a day
+// the screen shows, so recording the history and visiting a day never make two entries.
+export function missionHistory(
+  sim: SimulationResult,
+  scenario: string,
+  crewId: string,
+  throughDay: number,
+): LogEntry[] {
+  const out: LogEntry[] = [];
+  for (let day = 0; day <= throughDay; day++)
+    out.push(...blackBoxEntries(sim, scenario, crewId, day));
+  return out;
+}
+
+// Writes entries to the outbox in one transaction when the store offers one. Returns how many were
+// new: entries already waiting in the outbox are ignored (same key). Entries the ground already has
+// may be queued again after a sync; the ground stores each key once (on conflict do nothing).
+export function recordHistory(
+  store: OutboxStore & { batch?: (fn: () => void) => void },
+  entries: LogEntry[],
+): number {
+  const before = store.pendingCount();
+  const write = () => entries.forEach(e => enqueue(store, e));
+  if (store.batch) store.batch(write);
+  else write();
+  return store.pendingCount() - before;
 }

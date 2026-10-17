@@ -1,13 +1,19 @@
 # Seed the demo users
 
-Somacast needs three demo accounts on the Supabase project `somacast`. Both are demo identities on the
+Somacast needs four demo accounts on the Supabase project `somacast`. Both are demo identities on the
 reserved `.test` domain; no real person or real health data is involved.
 
 | Email | Role | Crew | Display name |
 |---|---|---|---|
 | maya@somacast.test | `crew` | `C1` | Maya |
+| kenji@somacast.test | `crew` | `C2` | Kenji |
 | daniel@somacast.test | `surgeon` | (none, sees all crews) | Daniel |
 | probe@somacast.test | `crew` | `ZZ-TEST` | RLS probe |
+
+On the phone each crew account lives in its own simulated scenario and opens on a demo day
+(`apps/mobile/src/config/mission.ts`): Maya, normal, day 89; Kenji, blackout decline, day 75 (Storm).
+After sign-in the black box records every day 0..that day, so the ground console gets the whole
+mission at the next AOS.
 
 `probe@somacast.test` belongs to the test crew `ZZ-TEST`. Only `scripts/rls-check.mjs` uses it, and every
 write the check makes goes to `ZZ-TEST`, never to a real crew. The ground console hides crews starting
@@ -21,8 +27,8 @@ Run the migration first (`npx supabase db push`), so the `profiles` table exists
 2. Click **Add user → Create new user**.
 3. Email `maya@somacast.test`, choose a password, and tick **Auto Confirm User** (the `.test` domain
    cannot receive a confirmation email).
-4. Repeat for `daniel@somacast.test` and `probe@somacast.test`.
-5. Put the three passwords in `scripts/.env` (copy `scripts/.env.example`). That file is git-ignored and is
+4. Repeat for `kenji@somacast.test`, `daniel@somacast.test` and `probe@somacast.test`.
+5. Put the four passwords in `scripts/.env` (copy `scripts/.env.example`). That file is git-ignored and is
    read only by `scripts/rls-check.mjs`. The app never stores them; you type them on the sign-in screen.
 
 ## 2. Give them roles
@@ -38,6 +44,12 @@ on conflict (user_id) do update
   set role = excluded.role, crew_id = excluded.crew_id, display_name = excluded.display_name;
 
 insert into public.profiles (user_id, role, crew_id, display_name)
+select id, 'crew', 'C2', 'Kenji'
+from auth.users where email = 'kenji@somacast.test'
+on conflict (user_id) do update
+  set role = excluded.role, crew_id = excluded.crew_id, display_name = excluded.display_name;
+
+insert into public.profiles (user_id, role, crew_id, display_name)
 select id, 'surgeon', null, 'Daniel'
 from auth.users where email = 'daniel@somacast.test'
 on conflict (user_id) do update
@@ -49,7 +61,7 @@ from auth.users where email = 'probe@somacast.test'
 on conflict (user_id) do update
   set role = excluded.role, crew_id = excluded.crew_id, display_name = excluded.display_name;
 
--- Check: expect three rows.
+-- Check: expect four rows.
 select u.email, p.role, p.crew_id, p.display_name
 from public.profiles p join auth.users u on u.id = p.user_id
 order by u.email;

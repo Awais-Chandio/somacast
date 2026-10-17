@@ -61,7 +61,7 @@ export function Sparkline({
           · usual{' '}
           {spark.usual === null
             ? 'still learning'
-            : withUnit(spark.usual, spec.unit)}
+            : withUnit(spark.usual, spec.unit, 2)}
         </span>
       </p>
       {values.length === 0 ? (

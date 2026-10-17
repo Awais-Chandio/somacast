@@ -17,6 +17,7 @@ import {
 } from '../../link/controller/useLinkPanel';
 import { LinkPanel } from '../../link/view/LinkPanel';
 import { ff, fs } from '../../../shared/theme/typography';
+import { demoMissionFor } from '../../../config/mission';
 import { useTodayController } from '../controller/useTodayController';
 import { AlertCard } from './AlertCard';
 import { DayStepper } from './DayStepper';
@@ -49,7 +50,18 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
     remote,
     accountId: account?.userId ?? null,
   });
-  const c = useTodayController(outbox, link.refresh, link.resetEpoch, crewId);
+  // Signed in: the account's own scenario and demo day; its whole mission goes into the black box.
+  const mission = useMemo(
+    () => (account ? demoMissionFor(account.email) : undefined),
+    [account],
+  );
+  const c = useTodayController(
+    outbox,
+    link.refresh,
+    link.resetEpoch,
+    crewId,
+    mission,
+  );
   const { view } = c;
 
   return (
