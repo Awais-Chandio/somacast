@@ -1,0 +1,9 @@
+{
+  "id": "solar-storm",
+  "title": "Solar particle event",
+  "description": "A short radiation spike hits the whole crew, followed by a few nights of worse sleep. Values are illustrative; real event dates come from NASA DONKI later.",
+  "effects": [
+    { "metric": "radiationDose", "crew": "all", "startDay": 60, "endDay": 62, "kind": "step", "delta": 4 },
+    { "metric": "sleepHours", "crew": "all", "startDay": 61, "endDay": 64, "kind": "step", "delta": -0.5 }
+  ]
+}

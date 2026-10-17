@@ -1,0 +1,6 @@
+{
+  "id": "normal",
+  "title": "Normal days",
+  "description": "No injected problems. Used to learn baselines and to measure false alerts.",
+  "effects": []
+}
