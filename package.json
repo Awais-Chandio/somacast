@@ -1,0 +1,12 @@
+{
+  "name": "somacast",
+  "private": true,
+  "description": "Body weather for crews beyond Earth. NASA Space Apps Challenge 2026 entry.",
+  "scripts": {
+    "start": "npm --prefix apps/mobile start",
+    "android": "npm --prefix apps/mobile run android",
+    "test": "npm run test:core && npm run test:mobile",
+    "test:core": "npm --prefix packages/core test",
+    "test:mobile": "npm --prefix apps/mobile test"
+  }
+}

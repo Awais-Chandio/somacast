@@ -1,5 +1,5 @@
-import { metrics, type MetricId } from './metrics';
-import type { DailyReading } from './schemas';
+import { metrics, type MetricId } from '../domain/metrics';
+import type { DailyReading } from '../domain/schemas';
 
 export type Baseline = {
   metric: MetricId;

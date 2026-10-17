@@ -6,27 +6,44 @@ Somacast learns each crew member's personal baseline, forecasts the next 72 hour
 
 ## Quick start
 
-Core logic (TypeScript, Jest):
+Install once:
 
 ```bash
-cd packages/core
-npm ci
-npm test
+(cd packages/core && npm ci)
+(cd apps/mobile && npm ci)
 ```
 
-Mobile app (React Native, Android):
+Run from the repo root:
 
 ```bash
-cd apps/mobile
-npm ci
-npx react-native start
+npm test          # core + mobile tests
+npm start         # Metro bundler (keep this terminal open)
+npm run android   # in a second terminal: build and launch on Android
 ```
 
-Then, in a second terminal:
+React Native commands such as `npx react-native run-android` only work inside `apps/mobile`, not at the repo root.
 
-```bash
-cd apps/mobile
-npx react-native run-android
+## Project structure
+
+```
+packages/core/src/          Pure TypeScript, shared by mobile and web (the "model" of the system)
+  domain/                   Metrics catalogue and Zod schemas (reading, alert, forecast)
+  simulation/               Seeded simulator and scenarios (all data simulated)
+  engine/                   Baseline, z-score anomalies, 72 h forecast (rules only)
+  design/                   Brand tokens and contrast check
+  index.ts                  Public API; apps import only from here
+
+apps/mobile/src/            React Native app, feature-first MVC
+  app/                      App root (providers, status bar)
+  config/                   Mission settings (seed, days, scenarios)
+  shared/
+    components/             Reusable UI (Chip, StepButton, SimulatedBadge, SectionLabel)
+    model/                  Shared data helpers (simulateMission)
+    theme/                  Phone type scale, heading font
+  features/today/
+    model/                  Pure: simulation -> worded, formatted view data
+    controller/             Hook that owns screen state and actions
+    view/                   Screen and its components, layout only
 ```
 
 ## Important

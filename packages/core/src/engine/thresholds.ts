@@ -1,4 +1,4 @@
-import type { MetricId } from './metrics';
+import type { MetricId } from '../domain/metrics';
 
 // All thresholds are ILLUSTRATIVE and need expert review. They are not clinical limits.
 export const thresholds = {

@@ -1,11 +1,11 @@
 import { scenarios, simulate } from '@somacast/core';
-import { buildTodayView } from './buildTodayView';
+import { buildTodayView } from './todayModel';
 
 const base = { seed: 42, crewCount: 4, days: 90, startDate: '2027-01-01' };
 const normal = simulate({ ...base, scenario: scenarios.normal });
 const blackout = simulate({ ...base, scenario: scenarios.blackoutDecline });
 
-describe('buildTodayView', () => {
+describe('todayModel: buildTodayView', () => {
   it('normal day: Clear, normal confidence, no alerts, 7 readings with units', () => {
     const v = buildTodayView(normal, 'C1', 60);
     expect(v.crewName).toBe('Maya');

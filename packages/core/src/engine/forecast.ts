@@ -1,5 +1,5 @@
-import { metricIds, metrics, type MetricId } from './metrics';
-import type { Alert, DailyReading, Forecast } from './schemas';
+import { metricIds, metrics, type MetricId } from '../domain/metrics';
+import type { Alert, DailyReading, Forecast } from '../domain/schemas';
 import {
   badDirection,
   thresholds as defaults,

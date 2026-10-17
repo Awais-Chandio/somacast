@@ -144,7 +144,7 @@ Text colour rules:
   - Cloudy: cloud icon, Neon Yellow
   - Storm: storm icon, Rocket Red
   Text stays white.
-- Tokens live in one shared file (`tokens.ts` in `packages/core`); never hardcode colours or font names in components.
+- Tokens live in one shared file (`packages/core/src/design/tokens.ts`); never hardcode colours or font names in components.
 - Fonts to load: Fira Sans (Black, Bold), Overpass (Regular, SemiBold, Bold, Italic), Fira Code.
 
 ### 4.12 Brand checklist before any release

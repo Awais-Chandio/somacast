@@ -6,7 +6,7 @@ import {
   ScenarioSchema,
   AlertSchema,
   effectDelta,
-} from './index';
+} from '../index';
 
 const base = { seed: 42, crewCount: 4, days: 90, startDate: '2027-01-01' };
 

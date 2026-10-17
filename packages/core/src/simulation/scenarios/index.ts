@@ -1,7 +1,7 @@
 import normal from './normal.json';
 import blackoutDecline from './blackout-decline.json';
 import solarStorm from './solar-storm.json';
-import { ScenarioSchema, type Scenario } from '../schemas';
+import { ScenarioSchema, type Scenario } from '../../domain/schemas';
 
 // Every scenario file is validated when the module loads.
 export const scenarios: Record<

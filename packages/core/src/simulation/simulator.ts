@@ -1,6 +1,6 @@
 import { createRng } from './rng';
-import { metrics, type MetricId } from './metrics';
-import type { Crew, DailyReading, Effect, Scenario } from './schemas';
+import { metrics, type MetricId } from '../domain/metrics';
+import type { Crew, DailyReading, Effect, Scenario } from '../domain/schemas';
 
 const CREW_NAMES = ['Maya', 'Kenji', 'Amara', 'Luis'];
 const PERSONAL: MetricId[] = [

@@ -4,7 +4,7 @@
 
 import { StatusBar } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { TodayScreen } from './src/today/TodayScreen';
+import { TodayScreen } from '../features/today/view/TodayScreen';
 
 function App() {
   return (

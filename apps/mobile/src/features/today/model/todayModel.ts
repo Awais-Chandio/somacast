@@ -9,7 +9,7 @@ import {
   type SimulationResult,
 } from '@somacast/core';
 
-// Everything the Today screen draws, already worded and formatted.
+// Model: everything the Today screen draws, already worded and formatted.
 // The screen only lays this out; all decisions come from @somacast/core.
 
 export type AlertView = {

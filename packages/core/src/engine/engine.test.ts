@@ -8,7 +8,7 @@ import {
   ForecastSchema,
   computeBaseline,
   indexByDay,
-} from './index';
+} from '../index';
 
 const base = { crewCount: 4, days: 90, startDate: '2027-01-01' };
 const CREW = ['C1', 'C2', 'C3', 'C4'];
