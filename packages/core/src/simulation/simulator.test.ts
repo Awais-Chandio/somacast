@@ -6,6 +6,7 @@ import {
   ScenarioSchema,
   AlertSchema,
   effectDelta,
+  simulatedCrewName,
 } from '../index';
 
 const base = { seed: 42, crewCount: 4, days: 90, startDate: '2027-01-01' };
@@ -95,6 +96,22 @@ describe('simulator', () => {
       get(n, 61).radiationDose + 3,
     );
     expect(get(s, 70).radiationDose).toBeCloseTo(get(n, 70).radiationDose, 5);
+  });
+});
+
+describe('simulatedCrewName', () => {
+  it('matches the names simulate() gives each crew id', () => {
+    const { crew } = simulate({
+      seed: 1,
+      crewCount: 4,
+      days: 1,
+      startDate: '2027-01-01',
+      scenario: scenarios.normal,
+    });
+    for (const m of crew) expect(simulatedCrewName(m.id)).toBe(m.name);
+    expect(simulatedCrewName('C1')).toBe('Maya');
+    expect(simulatedCrewName('C9')).toBeNull();
+    expect(simulatedCrewName('ZZ-TEST')).toBeNull();
   });
 });
 

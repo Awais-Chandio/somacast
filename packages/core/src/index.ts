@@ -9,6 +9,7 @@ export { createRng, type Rng } from './simulation/rng';
 export {
   simulate,
   effectDelta,
+  simulatedCrewName,
   type SimulationOptions,
   type SimulationResult,
 } from './simulation/simulator';

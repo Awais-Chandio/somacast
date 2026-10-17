@@ -5,9 +5,11 @@
   "scripts": {
     "start": "npm --prefix apps/mobile start",
     "android": "npm --prefix apps/mobile run android",
-    "test": "npm run test:core && npm run test:mobile",
+    "web": "npm --prefix apps/web run dev",
+    "test": "npm run test:core && npm run test:mobile && npm run test:web",
     "test:core": "npm --prefix packages/core test",
     "test:mobile": "npm --prefix apps/mobile test",
+    "test:web": "npm --prefix apps/web test",
     "rls-check": "node scripts/rls-check.mjs",
     "db:push": "supabase db push"
   },

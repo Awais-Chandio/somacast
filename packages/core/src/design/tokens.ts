@@ -57,6 +57,16 @@ export const font = {
   code: 'FiraCode-Regular',
 } as const;
 
+// The same faces for the web (CSS family + weight), loaded from Google Fonts by apps/web.
+export const webFont = {
+  heading: { family: "'Fira Sans', system-ui, sans-serif", weight: 900 },
+  headingBold: { family: "'Fira Sans', system-ui, sans-serif", weight: 700 },
+  body: { family: "'Overpass', system-ui, sans-serif", weight: 400 },
+  bodySemi: { family: "'Overpass', system-ui, sans-serif", weight: 600 },
+  bodyBold: { family: "'Overpass', system-ui, sans-serif", weight: 700 },
+  code: { family: "'Fira Code', ui-monospace, monospace", weight: 400 },
+} as const;
+
 // Reference sizes from the guide (px). Scale down for small phones.
 export const size = {
   h1: 60,

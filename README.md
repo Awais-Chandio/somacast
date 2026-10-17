@@ -44,7 +44,14 @@ apps/mobile/src/            React Native app, feature-first MVC
     model/                  Pure: simulation -> worded, formatted view data
     controller/             Hook that owns screen state and actions
     view/                   Screen and its components, layout only
+
+apps/web/src/               Ground console for flight surgeons (React + Vite), see apps/web/README.md
+  data/                     Pure: Supabase rows -> readings -> core assess(); Supabase calls
+  features/                 auth, overview (crew cards), crew (alerts, sparklines, LOS timeline, notes)
+  shared/                   Shell (SIMULATED DATA badge, footer), weather status, formatting
 ```
+
+Ground console: `npm run web` (needs `apps/web/.env`, see `apps/web/.env.example`).
 
 ## Important
 

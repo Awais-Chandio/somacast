@@ -3,6 +3,18 @@ import { metrics, type MetricId } from '../domain/metrics';
 import type { Crew, DailyReading, Effect, Scenario } from '../domain/schemas';
 
 const CREW_NAMES = ['Maya', 'Kenji', 'Amara', 'Luis'];
+
+// Simulated crew ids are C1, C2, ... in CREW_NAMES order.
+function crewIdFor(i: number): string {
+  return `C${i + 1}`;
+}
+
+// Name of a simulated crew member, from the id alone (the ground console has no profile access).
+// Unknown ids get null, so the caller shows the id instead.
+export function simulatedCrewName(crewId: string): string | null {
+  const i = CREW_NAMES.findIndex((_, k) => crewIdFor(k) === crewId);
+  return i >= 0 ? (CREW_NAMES[i] ?? null) : null;
+}
 const PERSONAL: MetricId[] = [
   'restingHr',
   'hrv',
@@ -72,7 +84,7 @@ export function simulate(options: SimulationOptions): SimulationResult {
   const crew: Crew[] = [];
   const personalMean: Record<string, Record<string, number>> = {};
   for (let i = 0; i < crewCount; i++) {
-    const id = `C${i + 1}`;
+    const id = crewIdFor(i);
     crew.push({ id, name: CREW_NAMES[i] ?? `Crew ${i + 1}` });
     const means: Record<string, number> = {};
     for (const metric of PERSONAL) {
