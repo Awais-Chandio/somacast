@@ -4,14 +4,18 @@ import {
   LOS_GAP_MS,
   type ContactSpan,
 } from '../../data/ground';
+import { useCopy } from '../../shared/copy';
 import { utc } from '../../shared/format';
 
 const ms = (s: ContactSpan) => Date.parse(s.to) - Date.parse(s.from);
 
 // When rows arrived (contact) and when nothing arrived (LOS gap), from first row to now.
 export function LosTimeline({ spans }: { spans: ContactSpan[] }) {
+  const { words } = useCopy();
   if (spans.length === 0)
-    return <p className="muted">No rows received from this crew yet.</p>;
+    return (
+      <p className="muted">No rows received from this {words.team} yet.</p>
+    );
   const total = spans.reduce((a, s) => a + ms(s), 0) || 1;
   const gaps = spans.filter(s => s.kind === 'gap');
   return (
@@ -22,7 +26,7 @@ export function LosTimeline({ spans }: { spans: ContactSpan[] }) {
             key={i}
             className={`tl-${s.kind}`}
             style={{ flexGrow: Math.max(ms(s) / total, 0.01) }}
-            title={`${s.kind === 'gap' ? 'LOS gap' : 'Contact'} ${utc(s.from)} to ${utc(s.to)}`}
+            title={`${s.kind === 'gap' ? words.linkGap : 'Contact'} ${utc(s.from)} to ${utc(s.to)}`}
           />
         ))}
       </div>
@@ -45,8 +49,10 @@ export function LosTimeline({ spans }: { spans: ContactSpan[] }) {
             <li key={i}>
               <RadioOff size={16} aria-hidden="true" className="ic-gap" />
               <span>
-                <strong>LOS gap {formatDuration(ms(s))}</strong>, no rows
-                received
+                <strong>
+                  {words.linkGap} {formatDuration(ms(s))}
+                </strong>
+                , no rows received
                 {s.open
                   ? ` since ${utc(s.from)} (still open)`
                   : ` from ${utc(s.from)} to ${utc(s.to)}`}

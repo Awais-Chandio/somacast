@@ -4,6 +4,7 @@ import {
   MockGroundStore,
   enqueue,
   flushOutbox,
+  idempotencyKey,
   mockTransport,
   isLinkUp,
   createRng,
@@ -85,6 +86,31 @@ describe('outbox', () => {
       { batchSize: 3 },
     );
     expect(sent).toEqual(entries(10).map(e => e.id));
+  });
+
+  it('NFR-003 wrong clock: order and de-duplication never depend on the timestamp', async () => {
+    const store = new MemoryOutboxStore();
+    const ground = new MockGroundStore();
+    // The device clock jumps back to 1970, then far ahead, then back again.
+    const stamps = [
+      '2027-02-14T10:00:00.000Z',
+      '1970-01-01T00:00:00.000Z',
+      '2099-12-31T23:59:59.000Z',
+      '2027-02-14T09:00:00.000Z',
+    ];
+    const written = stamps.map((timestamp, i) => ({
+      ...entries(4)[i]!,
+      timestamp,
+    }));
+    for (const e of written) enqueue(store, e);
+    // The same entry written again after a clock change is still one entry.
+    enqueue(store, { ...written[0]!, timestamp: '2001-01-01T00:00:00.000Z' });
+    expect(store.pendingCount()).toBe(4);
+
+    await flushOutbox(store, mockTransport(ground, { linkUp: () => true }));
+    expect(store.pendingCount()).toBe(0);
+    // Sent in the order written, not in timestamp order; one row each.
+    expect(ground.keys()).toEqual(written.map(idempotencyKey));
   });
 
   it('link schedule', () => {

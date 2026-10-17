@@ -10,6 +10,6 @@ Somacast uses **simulated** crew vitals. Real daily astronaut heart rate and HRV
 | Cabin CO2 limit | 24 h average at or below 3 mmHg; 7-day ISS average ranged 1 to 9 mmHg | Published | [NASA OCHMO technical brief](https://www.nasa.gov/wp-content/uploads/2023/12/ochmo-tb-004-carbon-dioxide.pdf) |
 | Cabin CO2 baseline in simulator | 2.0 mmHg | Guess | Inside the published range, not a measurement |
 | Resting HR, HRV, exercise minutes, radiation baseline, psych check-in | see `packages/core/src/domain/metrics.ts` | Guess | Illustrative, expert review required |
-| Solar particle events | real event dates | Published | NASA DONKI SEP, fetched by `scripts/fetch-donki.mjs` |
+| Solar particle events | illustrative spike on days 60 to 62 | Not yet sourced | NASA DONKI SEP is planned: `packages/core/scripts/fetch-donki.mjs` exists, but no DONKI data has been fetched or used yet |
 
 Somacast is decision support, not a medical device. Thresholds are illustrative and need expert review.

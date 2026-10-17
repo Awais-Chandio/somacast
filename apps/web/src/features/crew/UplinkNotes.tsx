@@ -2,6 +2,8 @@ import { useState, type FormEvent } from 'react';
 import { Send } from 'lucide-react';
 import { MAX_NOTE_LENGTH, noteProblem } from '../../data/ground';
 import type { Note } from '../../data/api';
+import { capitalize } from '@somacast/core';
+import { useCopy } from '../../shared/copy';
 import { utc } from '../../shared/format';
 
 type Props = {
@@ -20,6 +22,7 @@ export function UplinkNotes({ crewName, notes, onSend }: Props) {
   );
   // Notes sent from this screen show at once, before the next refresh brings them back from the ground.
   const [sent, setSent] = useState<Note[]>([]);
+  const { words } = useCopy();
   const shown = [
     ...sent.filter(s => !notes.some(n => n.id === s.id)),
     ...notes,
@@ -37,7 +40,7 @@ export function UplinkNotes({ crewName, notes, onSend }: Props) {
       setText('');
       setMsg({
         kind: 'ok',
-        text: 'Note sent. The crew sees it after their next sync.',
+        text: `Note sent. The ${words.team} sees it after their next sync.`,
       });
     } catch (err) {
       setMsg({
@@ -81,13 +84,13 @@ export function UplinkNotes({ crewName, notes, onSend }: Props) {
       </form>
       <h3>SENT NOTES ({shown.length})</h3>
       {shown.length === 0 ? (
-        <p className="muted">No notes sent to this crew yet.</p>
+        <p className="muted">No notes sent to this {words.team} yet.</p>
       ) : (
         <ul className="note-list">
           {shown.map(n => (
             <li key={n.id}>
               <p className="muted small">
-                {n.author_name ?? 'Flight surgeon'},{' '}
+                {n.author_name ?? capitalize(words.doctor)},{' '}
                 <time dateTime={n.created_at}>{utc(n.created_at)}</time>
               </p>
               <p className="note-text">{n.text}</p>

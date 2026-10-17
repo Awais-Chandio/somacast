@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react';
+import { useCopy } from '../../shared/copy';
 
 type Props = {
   busy: boolean;
@@ -9,6 +10,7 @@ type Props = {
 export function SignIn({ busy, error, onSignIn }: Props) {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const { words } = useCopy();
   const submit = (e: FormEvent) => {
     e.preventDefault();
     onSignIn(email, password);
@@ -17,7 +19,7 @@ export function SignIn({ busy, error, onSignIn }: Props) {
     <section className="panel signin" aria-labelledby="signin-title">
       <h1 id="signin-title">SIGN IN</h1>
       <p className="lead">
-        For flight surgeons. Reads every crew's synced black-box log.
+        For {words.doctors}. Reads every {words.team}'s synced black-box log.
       </p>
       <form onSubmit={submit} noValidate>
         <label htmlFor="email">Email</label>

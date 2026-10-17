@@ -8,6 +8,8 @@ import {
   ForecastSchema,
   computeBaseline,
   indexByDay,
+  thresholds,
+  type Thresholds,
 } from '../index';
 
 const base = { crewCount: 4, days: 90, startDate: '2027-01-01' };
@@ -26,6 +28,24 @@ describe('baseline', () => {
     expect(b.mean).toBeLessThan(7.2);
     expect(b.sd).toBeGreaterThan(0.2);
     expect(b.sd).toBeLessThan(0.9);
+  });
+
+  it("REQ-001: each crew member's baseline comes only from their own readings", () => {
+    const { readings } = simulate({
+      ...base,
+      seed: 42,
+      scenario: scenarios.normal,
+    });
+    const c1 = computeBaseline(indexByDay(readings, 'C1'), 'sleepHours', 0, 28);
+    const c2 = computeBaseline(indexByDay(readings, 'C2'), 'sleepHours', 0, 28);
+    expect(c1!.mean).not.toBeCloseTo(c2!.mean, 3);
+    // Change everything about C2: C1's baseline does not move.
+    const c2Halved = readings.map(r =>
+      r.crewId === 'C2' ? { ...r, sleepHours: r.sleepHours / 2 } : r,
+    );
+    expect(
+      computeBaseline(indexByDay(c2Halved, 'C1'), 'sleepHours', 0, 28),
+    ).toEqual(c1);
   });
 
   it('gives no alerts while still learning (under 14 days)', () => {
@@ -57,6 +77,31 @@ describe('anomaly detection', () => {
         }
     }
     expect(alerted / n).toBeLessThan(0.01);
+  });
+
+  it('REQ-003: alerts after exactly 3 bad days in a row, and both thresholds are configurable', () => {
+    const { readings } = simulate({
+      ...base,
+      seed: 42,
+      scenario: scenarios.normal,
+    });
+    const b = computeBaseline(indexByDay(readings, 'C1'), 'sleepHours', 0, 28)!;
+    const low = b.mean - 4 * b.sd; // z = -4, far past the line
+    // C1 sleeps badly on days 40, 41 and 42 only.
+    const bad = readings.map(r =>
+      r.crewId === 'C1' && r.day >= 40 && r.day <= 42
+        ? { ...r, sleepHours: low }
+        : r,
+    );
+    const sleepAlert = (day: number, t: Thresholds = thresholds) =>
+      detectAnomalies(bad, 'C1', day, t).find(a => a.metric === 'sleepHours');
+
+    expect(sleepAlert(41)).toBeUndefined(); // 2 days: not yet
+    expect(sleepAlert(42)?.days).toBe(3); // 3rd day: alert
+    expect(sleepAlert(42)?.zscore).toBeCloseTo(-4, 5);
+    // Configurable: a 2-day streak alerts a day earlier; a line at z 5 never alerts.
+    expect(sleepAlert(41, { ...thresholds, alertDays: 2 })?.days).toBe(2);
+    expect(sleepAlert(42, { ...thresholds, zAlert: 5 })).toBeUndefined();
   });
 
   it('every alert is valid and explains itself', () => {
@@ -174,6 +219,23 @@ describe('72 h forecast', () => {
       r => !(r.crewId === 'C1' && r.day >= 36 && r.day <= 38),
     );
     expect(assess(gappy, 'C1', 40).forecast.confidence).toBe('low');
+  });
+
+  it('NFR-002: every forecast, on every day of every scenario, gives at least one reason', () => {
+    for (const scenario of Object.values(scenarios)) {
+      const { readings } = simulate({ ...base, seed: 11, scenario });
+      for (const c of CREW)
+        for (let d = 0; d < 90; d++) {
+          const { alerts, forecast } = assess(readings, c, d);
+          expect([scenario.id, c, d, forecast.reasons.length > 0]).toEqual([
+            scenario.id,
+            c,
+            d,
+            true,
+          ]);
+          for (const a of alerts) expect(a.reason).not.toBe('');
+        }
+    }
   });
 
   it('forecast is valid, 72 h, same input gives same output', () => {

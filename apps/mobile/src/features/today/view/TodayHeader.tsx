@@ -2,16 +2,18 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@somacast/core';
 import { SimulatedBadge } from '../../../shared/components';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { ff, fs } from '../../../shared/theme/typography';
 
 export function TodayHeader() {
+  const { words } = useCopy();
   return (
     <View style={styles.header}>
       <View style={styles.text}>
         <Text style={styles.title} accessibilityRole="header">
           SOMACAST
         </Text>
-        <Text style={styles.subtitle}>Body weather for crews beyond Earth</Text>
+        <Text style={styles.subtitle}>{words.tagline}</Text>
       </View>
       <SimulatedBadge />
     </View>

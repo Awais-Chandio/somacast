@@ -1,8 +1,9 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { MessageSquare } from 'lucide-react-native';
-import { size, theme, type UplinkNote } from '@somacast/core';
+import { size, theme, type Copy, type UplinkNote } from '@somacast/core';
 import { SectionLabel } from '../../../shared/components';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { ICON_STROKE } from '../../../shared/theme/icons';
 import { ff, fs } from '../../../shared/theme/typography';
 import type { GroundNotes as GroundNotesState } from '../controller/useGroundNotes';
@@ -34,17 +35,18 @@ export function GroundNoteCard({ note }: { note: UplinkNote }) {
   );
 }
 
-function statusText(s: GroundNotesState): string | null {
+function statusText(s: GroundNotesState, words: Copy): string | null {
   if (s.phase === 'loading') return 'Checking for notes from the ground…';
   if (s.phase === 'error') return s.error;
   if (s.notes.length > 0) return null;
   return s.phase === 'idle'
-    ? 'Notes from the flight surgeon arrive at the next AOS.'
+    ? `Notes from the ${words.doctor} arrive ${words.nextLinkUp}.`
     : 'No notes from the ground yet.';
 }
 
 export function GroundNotes({ state }: { state: GroundNotesState }) {
-  const status = statusText(state);
+  const { words } = useCopy();
+  const status = statusText(state, words);
   return (
     <>
       <SectionLabel>FROM THE GROUND ({state.notes.length})</SectionLabel>

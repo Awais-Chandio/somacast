@@ -3,6 +3,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 import { RefreshCw } from 'lucide-react';
 import { fetchIndex, fetchReadings } from '../../data/api';
 import { assessCrew, rowsToReadings, summarizeCrews } from '../../data/ground';
+import { capitalize } from '@somacast/core';
+import { useCopy } from '../../shared/copy';
 import { count, utc } from '../../shared/format';
 import { useLoad } from '../../shared/useLoad';
 import { WeatherStatus } from '../../shared/Weather';
@@ -24,11 +26,12 @@ async function loadOverview(client: SupabaseClient) {
 export function Overview({ client }: { client: SupabaseClient }) {
   const load = useCallback(() => loadOverview(client), [client]);
   const { state, reload } = useLoad(load);
+  const { words } = useCopy();
 
   return (
     <section aria-labelledby="overview-title">
       <div className="title-row">
-        <h1 id="overview-title">CREW OVERVIEW</h1>
+        <h1 id="overview-title">{words.team.toUpperCase()} OVERVIEW</h1>
         <button
           className="btn-secondary"
           onClick={reload}
@@ -38,8 +41,8 @@ export function Overview({ client }: { client: SupabaseClient }) {
         </button>
       </div>
       <p className="lead">
-        72 h body weather per crew member, computed here from the readings each
-        crew synced at AOS.
+        72 h body weather per {words.member}, computed here from the readings
+        each {words.team} synced {words.atLinkUp}.
       </p>
       {state.phase === 'loading' && (
         <p className="muted" role="status">
@@ -53,7 +56,8 @@ export function Overview({ client }: { client: SupabaseClient }) {
       )}
       {state.phase === 'ready' && state.data.length === 0 && (
         <p className="muted">
-          No crew has synced yet. Rows appear here after a crew's first AOS.
+          No {words.team} has synced yet. Rows appear here after a {words.team}
+          's {words.firstLinkUp}.
         </p>
       )}
       {state.phase === 'ready' && state.data.length > 0 && (
@@ -66,13 +70,15 @@ export function Overview({ client }: { client: SupabaseClient }) {
               >
                 <span className="card-head">
                   <span className="card-name">{c.name}</span>
-                  <span className="card-id">Crew {c.crewId}</span>
+                  <span className="card-id">
+                    {capitalize(words.team)} {c.crewId}
+                  </span>
                 </span>
                 {c.assessment ? (
                   <span className="card-forecast">
                     <WeatherStatus state={c.assessment.forecast.state} big />
                     <span className="muted small">
-                      72 h, as of mission day {c.assessment.asOfDay}
+                      72 h, as of {words.day} {c.assessment.asOfDay}
                       {c.assessment.forecast.confidence === 'low'
                         ? ', low confidence'
                         : ''}

@@ -2,8 +2,9 @@ import React, { useMemo, useRef } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme, type LogEntry } from '@somacast/core';
-import { Chip, SectionLabel } from '../../../shared/components';
+import { capitalize, theme, type LogEntry } from '@somacast/core';
+import { Chip, ModeToggle, SectionLabel } from '../../../shared/components';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { getDeviceOutbox } from '../../../sync/SqliteOutboxStore';
 import {
   createSupabaseTransport,
@@ -79,12 +80,15 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
   };
   const handoff = link.contact ? handoffCardView(link.contact) : null;
   const notes = useGroundNotes(client, crewId, link.contact);
+  const { words } = useCopy();
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <TodayHeader />
       <AccountBar
-        label={account ? accountLabel(account) : 'Offline demo, no account'}
+        label={
+          account ? accountLabel(account, words) : 'Offline demo, no account'
+        }
         action={account ? 'SIGN OUT' : 'SIGN IN'}
         onAction={onAccountAction}
       />
@@ -94,7 +98,10 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
         {handoff && <HandoffSentCard view={handoff} />}
         {client && crewId && <GroundNotes state={notes} />}
 
-        <SectionLabel>CREW MEMBER</SectionLabel>
+        <SectionLabel>WORDING</SectionLabel>
+        <ModeToggle />
+
+        <SectionLabel>{words.member.toUpperCase()}</SectionLabel>
         <View style={styles.row}>
           {c.crew.map(m => (
             <Chip
@@ -102,7 +109,7 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
               label={m.name}
               selected={m.id === c.crewId}
               onPress={() => c.selectCrew(m.id)}
-              a11y={`Crew member ${m.name}`}
+              a11y={`${capitalize(words.member)} ${m.name}`}
             />
           ))}
         </View>
@@ -120,7 +127,7 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
           ))}
         </View>
 
-        <SectionLabel>MISSION DAY</SectionLabel>
+        <SectionLabel>{words.day.toUpperCase()}</SectionLabel>
         <DayStepper
           day={c.day}
           maxDay={c.maxDay}

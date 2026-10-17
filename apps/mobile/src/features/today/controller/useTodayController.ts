@@ -13,6 +13,7 @@ import {
   missionHistory,
   recordHistory,
 } from '../../../sync/blackBox';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { buildTodayView } from '../model/todayModel';
 
 const MAX_DAY = MISSION.days - 1;
@@ -40,9 +41,10 @@ export function useTodayController(
   );
 
   const sim = useMemo(() => simulateMission(scenario), [scenario]);
+  const { words } = useCopy();
   const view = useMemo(
-    () => buildTodayView(sim, crewId, day),
-    [sim, crewId, day],
+    () => buildTodayView(sim, crewId, day, words),
+    [sim, crewId, day, words],
   );
   const logEntries = useMemo(
     () => blackBoxEntries(sim, scenario, crewId, day),

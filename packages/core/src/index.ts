@@ -60,6 +60,16 @@ export {
   type FlushResult,
 } from './sync/outbox';
 
+// copy: Space / Earth wording (Earth mode changes words only, never logic)
+export {
+  modes,
+  copy,
+  metricLabel,
+  capitalize,
+  type Mode,
+  type Copy,
+} from './copy/copy';
+
 // design: brand tokens shared by mobile and web
 export * from './design/tokens';
 export { contrastRatio } from './design/contrast';

@@ -24,4 +24,5 @@ export const badDirection: Record<MetricId, 'high' | 'low'> = {
   psychCheckin: 'low',
 };
 
-export type Thresholds = typeof thresholds;
+// Any number per key, so a caller can pass its own values (REQ-003: configurable).
+export type Thresholds = Record<keyof typeof thresholds, number>;

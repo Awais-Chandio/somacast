@@ -187,6 +187,39 @@ a:hover {
   margin-top: 6px;
 }
 
+/* "Space / Earth" wording toggle in the header: the pressed button gets a tick and a fill. */
+.mode-toggle {
+  display: inline-flex;
+  border: 2px solid var(--accent);
+  border-radius: 4px;
+}
+
+.mode-toggle button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: var(--touch);
+  padding: 0 14px;
+  background: transparent;
+  color: var(--accent);
+  border: 0;
+  font-family: var(--f-bodyBold);
+  font-weight: var(--w-bodyBold);
+  font-size: 15px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mode-toggle button[aria-pressed='true'] {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+.mode-toggle button[aria-pressed='false']:hover {
+  color: var(--link-hover);
+  text-decoration: underline;
+}
+
 /* -------------------------------------------------------------- buttons */
 
 button {

@@ -1,5 +1,5 @@
 import type { SupabaseClient, User } from '@supabase/supabase-js';
-import { ProfileSchema, type Profile } from '@somacast/core';
+import { copy, ProfileSchema, type Copy, type Profile } from '@somacast/core';
 
 // Model for sign-in: pure functions plus the two Supabase calls. The hook wires them to state.
 
@@ -83,11 +83,11 @@ export function crewProblem(
   return `Crew ${account.crewId} is not part of this simulated mission.`;
 }
 
-export function accountLabel(a: Account): string {
+export function accountLabel(a: Account, words: Copy = copy.space): string {
   const name = a.displayName ?? a.email;
   return a.role === 'crew'
-    ? `${name}, crew ${a.crewId}`
-    : `${name}, flight surgeon`;
+    ? `${name}, ${words.team} ${a.crewId}`
+    : `${name}, ${words.doctor}`;
 }
 
 export function errorText(e: unknown): string {

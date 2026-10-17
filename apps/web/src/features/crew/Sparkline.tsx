@@ -1,5 +1,6 @@
 import { AlertTriangle } from 'lucide-react';
-import { metrics } from '@somacast/core';
+import { metricLabel, metrics } from '@somacast/core';
+import { useCopy } from '../../shared/copy';
 import type { Spark } from '../../data/ground';
 import { withUnit } from '../../shared/format';
 
@@ -17,6 +18,7 @@ export function Sparkline({
   alerting: boolean;
 }) {
   const spec = metrics[spark.metric];
+  const label = metricLabel(spark.metric, useCopy().words);
   const values = spark.points.flatMap(p => (p.value === null ? [] : [p.value]));
   const all = spark.usual === null ? values : [...values, spark.usual];
   const lo = Math.min(...all);
@@ -45,7 +47,7 @@ export function Sparkline({
   return (
     <figure className={`spark${alerting ? ' spark-alert' : ''}`}>
       <figcaption>
-        <span className="spark-label">{spec.label}</span>
+        <span className="spark-label">{label}</span>
         {alerting && (
           <span className="tag-alert">
             <AlertTriangle size={16} aria-hidden="true" /> Alert
@@ -71,7 +73,7 @@ export function Sparkline({
           viewBox={`0 0 ${W} ${H}`}
           className="spark-svg"
           role="img"
-          aria-label={`${spec.label}, last ${spark.points.length} days. ${values.length} days with a reading.`}
+          aria-label={`${label}, last ${spark.points.length} days. ${values.length} days with a reading.`}
         >
           {spark.usual !== null && (
             <line

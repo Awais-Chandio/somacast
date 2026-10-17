@@ -1,7 +1,8 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { theme } from '@somacast/core';
+import { capitalize, theme } from '@somacast/core';
 import { StepButton } from '../../../shared/components';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { ff, fs } from '../../../shared/theme/typography';
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export function DayStepper({ day, maxDay, onPrev, onNext }: Props) {
+  const { words } = useCopy();
   return (
     <View style={styles.stepper}>
       <StepButton
@@ -22,7 +24,7 @@ export function DayStepper({ day, maxDay, onPrev, onNext }: Props) {
       />
       <Text
         style={styles.value}
-        accessibilityLabel={`Mission day ${day} of ${maxDay}`}
+        accessibilityLabel={`${capitalize(words.day)} ${day} of ${maxDay}`}
       >
         Day {day}
       </Text>

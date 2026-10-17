@@ -9,6 +9,7 @@ import {
 } from 'lucide-react-native';
 import { color, size, theme } from '@somacast/core';
 import { Chip } from '../../../shared/components';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { ICON_STROKE } from '../../../shared/theme/icons';
 import { ff, fs } from '../../../shared/theme/typography';
 import type { LinkPanelController } from '../controller/useLinkPanel';
@@ -22,16 +23,28 @@ import {
 const ICON = size.icon[1]; // 24
 const SMALL_ICON = size.icon[0]; // 16
 
-// Link state is shown by icon + word; the colour only helps.
+// Link state is shown by icon + word; the colour only helps. The words come from the Space / Earth copy.
 const linkLook = {
-  AOS: { Icon: Radio, tint: color.blueYonder, hint: 'signal' },
-  LOS: { Icon: RadioOff, tint: color.rocketRed, hint: 'no signal' },
+  AOS: {
+    Icon: Radio,
+    tint: color.blueYonder,
+    word: 'linkUp',
+    hint: 'linkUpHint',
+  },
+  LOS: {
+    Icon: RadioOff,
+    tint: color.rocketRed,
+    word: 'linkDown',
+    hint: 'linkDownHint',
+  },
 } as const;
 
 type Props = { link: LinkPanelController; crewId: string };
 
 export function LinkPanel({ link, crewId }: Props) {
+  const { words } = useCopy();
   const look = linkLook[link.link];
+  const linkWord = words[look.word];
   const banner = statusText(link.status);
   const BannerIcon =
     link.status.phase === 'synced'
@@ -48,7 +61,9 @@ export function LinkPanel({ link, crewId }: Props) {
           onPress={link.toggleLink}
           accessibilityRole="switch"
           accessibilityState={{ checked: link.link === 'AOS' }}
-          accessibilityLabel={`Link ${link.link}, ${look.hint}. Tap to switch.`}
+          accessibilityLabel={`Link ${linkWord}, ${
+            words[look.hint]
+          }. Tap to switch.`}
           style={({ pressed }) => [
             styles.toggle,
             { borderColor: look.tint },
@@ -56,7 +71,7 @@ export function LinkPanel({ link, crewId }: Props) {
           ]}
         >
           <look.Icon size={ICON} color={look.tint} strokeWidth={ICON_STROKE} />
-          <Text style={styles.toggleText}>Link: {link.link}</Text>
+          <Text style={styles.toggleText}>Link: {linkWord}</Text>
         </Pressable>
         <Text style={styles.count} accessibilityLiveRegion="polite">
           {outboxText(link.outbox)}
@@ -93,7 +108,7 @@ export function LinkPanel({ link, crewId }: Props) {
           accessibilityLabel={`Demo: fill ${formatCount(
             BACKLOG_SIZE,
           )}-item backlog`}
-          accessibilityHint="Works only in LOS"
+          accessibilityHint={`Works only ${words.whileDown}`}
           accessibilityState={{ disabled: !link.canFill, busy: link.filling }}
           style={({ pressed }) => [
             styles.fill,
@@ -112,7 +127,7 @@ export function LinkPanel({ link, crewId }: Props) {
           disabled={!link.canReset}
           accessibilityRole="button"
           accessibilityLabel="Demo: reset outbox and ground"
-          accessibilityHint="Works only in LOS"
+          accessibilityHint={`Works only ${words.whileDown}`}
           accessibilityState={{ disabled: !link.canReset }}
           style={({ pressed }) => [
             styles.reset,
@@ -125,7 +140,7 @@ export function LinkPanel({ link, crewId }: Props) {
       </View>
       {link.link === 'AOS' && (
         <Text style={styles.hint}>
-          Fill, reset and ground switch work in LOS only.
+          Fill, reset and ground switch work {words.whileDown} only.
         </Text>
       )}
       {link.link === 'LOS' && link.ground === 'supabase' && (

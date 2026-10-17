@@ -1,3 +1,4 @@
+import { copy } from '@somacast/core';
 import {
   accountLabel,
   crewProblem,
@@ -69,5 +70,19 @@ describe('auth model', () => {
         displayName: null,
       }),
     ).toBe('maya@somacast.test, flight surgeon');
+  });
+
+  it('Earth wording: team and remote doctor', () => {
+    const maya: Account = {
+      ...user,
+      userId: user.id,
+      role: 'crew',
+      crewId: 'C1',
+      displayName: 'Maya',
+    };
+    expect(accountLabel(maya, copy.earth)).toBe('Maya, team C1');
+    expect(
+      accountLabel({ ...maya, role: 'surgeon', crewId: null }, copy.earth),
+    ).toBe('Maya, remote doctor');
   });
 });

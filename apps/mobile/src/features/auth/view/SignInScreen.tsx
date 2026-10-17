@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { AlertTriangle, LogIn } from 'lucide-react-native';
 import { color, size, theme } from '@somacast/core';
+import { useCopy } from '../../../shared/copy/useCopy';
 import { ICON_STROKE } from '../../../shared/theme/icons';
 import { ff, fs } from '../../../shared/theme/typography';
 
@@ -38,6 +39,7 @@ export function SignInScreen({
   const [password, setPassword] = useState('');
   const [focus, setFocus] = useState<'email' | 'password' | null>(null);
   const submit = () => onSignIn(email, password);
+  const { words } = useCopy();
 
   return (
     <SafeAreaView style={styles.screen}>
@@ -52,11 +54,9 @@ export function SignInScreen({
           <Text style={styles.title} accessibilityRole="header">
             SOMACAST
           </Text>
-          <Text style={styles.subtitle}>
-            Body weather for crews beyond Earth
-          </Text>
+          <Text style={styles.subtitle}>{words.tagline}</Text>
 
-          <Text style={styles.h3}>CREW SIGN-IN</Text>
+          <Text style={styles.h3}>{words.team.toUpperCase()} SIGN-IN</Text>
 
           {configured ? (
             <>

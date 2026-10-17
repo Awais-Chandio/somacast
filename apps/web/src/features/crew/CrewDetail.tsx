@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { metrics } from '@somacast/core';
+import { metricLabel, metrics } from '@somacast/core';
 import {
   fetchIndex,
   fetchLatestHandoff,
@@ -24,6 +24,7 @@ import {
   sparklines,
   summarizeCrews,
 } from '../../data/ground';
+import { useCopy } from '../../shared/copy';
 import { count, num, utc, withUnit } from '../../shared/format';
 import { useLoad } from '../../shared/useLoad';
 import { WeatherStatus } from '../../shared/Weather';
@@ -73,6 +74,7 @@ export function CrewDetail({ client, crewId, authorId }: Props) {
   const load = useCallback(() => loadCrew(client, crewId), [client, crewId]);
   const { state, reload } = useLoad(load);
   const name = crewName(crewId);
+  const { words } = useCopy();
 
   const send = useCallback(
     (text: string) => sendNote(client, crewId, authorId, text),
@@ -80,16 +82,21 @@ export function CrewDetail({ client, crewId, authorId }: Props) {
   );
 
   if (isTestCrew(crewId))
-    return <p className="muted">Test crews are not shown in the console.</p>;
+    return (
+      <p className="muted">Test {words.teams} are not shown in the console.</p>
+    );
 
   return (
     <section aria-labelledby="crew-title">
       <a className="back" href="#/">
-        <ArrowLeft size={16} aria-hidden="true" /> All crews
+        <ArrowLeft size={16} aria-hidden="true" /> All {words.teams}
       </a>
       <div className="title-row">
         <h1 id="crew-title">
-          {name.toUpperCase()} <span className="title-id">CREW {crewId}</span>
+          {name.toUpperCase()}{' '}
+          <span className="title-id">
+            {words.team.toUpperCase()} {crewId}
+          </span>
         </h1>
         <button
           className="btn-secondary"
@@ -107,7 +114,7 @@ export function CrewDetail({ client, crewId, authorId }: Props) {
       )}
       {state.phase === 'error' && (
         <p className="error" role="alert">
-          Could not load this crew: {state.error}
+          Could not load this {words.team}: {state.error}
         </p>
       )}
       {state.phase === 'ready' && (
@@ -136,6 +143,7 @@ function CrewBody({
   onSend: (t: string) => Promise<Note>;
 }) {
   const { summary, assessment: a, sparks, readings } = data;
+  const { words } = useCopy();
   const alerting = new Set(a?.alerts.map(x => x.metric));
   return (
     <>
@@ -147,7 +155,7 @@ function CrewBody({
             <div className="hero-status">
               <WeatherStatus state={a.forecast.state} big />
               <span>
-                Next 72 h, as of mission day {a.asOfDay} ({a.asOfDate})
+                Next 72 h, as of {words.day} {a.asOfDay} ({a.asOfDate})
                 {a.forecast.confidence === 'low' && (
                   <strong>, low confidence</strong>
                 )}
@@ -202,7 +210,7 @@ function CrewBody({
               >
                 <p className="alert-head">
                   <AlertTriangle size={24} aria-hidden="true" />
-                  <strong>{spec.label}</strong>
+                  <strong>{metricLabel(al.metric, words)}</strong>
                   <span className="tag">
                     {al.severity === 'high' ? 'High' : 'Medium'}
                   </span>
@@ -255,7 +263,8 @@ function CrewBody({
                     <th scope="col">Day</th>
                     {sparks.map(s => (
                       <th scope="col" key={s.metric}>
-                        {metrics[s.metric].label} ({metrics[s.metric].unit})
+                        {metricLabel(s.metric, words)} ({metrics[s.metric].unit}
+                        )
                       </th>
                     ))}
                   </tr>

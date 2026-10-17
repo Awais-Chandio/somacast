@@ -5,6 +5,8 @@ import { SignIn } from './features/auth/SignIn';
 import { useSession } from './features/auth/useSession';
 import { CrewDetail } from './features/crew/CrewDetail';
 import { Overview } from './features/overview/Overview';
+import { capitalize } from '@somacast/core';
+import { useCopy } from './shared/copy';
 import { Shell } from './shared/Shell';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
@@ -42,6 +44,7 @@ export function App() {
 function Console({ client }: { client: SupabaseClient }) {
   const { state, signIn, signOut } = useSession(client);
   const route = useRoute();
+  const { words } = useCopy();
 
   if (state.phase === 'loading')
     return (
@@ -63,7 +66,7 @@ function Console({ client }: { client: SupabaseClient }) {
     <>
       <span className="account-name">
         {me.displayName ?? me.email},{' '}
-        {me.role === 'surgeon' ? 'flight surgeon' : 'crew'}
+        {me.role === 'surgeon' ? words.doctor : words.team}
       </span>
       <button className="btn-link" onClick={signOut}>
         <LogOut size={16} aria-hidden="true" /> SIGN OUT
@@ -75,11 +78,11 @@ function Console({ client }: { client: SupabaseClient }) {
     return (
       <Shell account={account}>
         <section className="panel" aria-labelledby="denied-title">
-          <h1 id="denied-title">FLIGHT SURGEONS ONLY</h1>
-          <p className="lead">Ground console is for flight surgeons.</p>
+          <h1 id="denied-title">{words.doctors.toUpperCase()} ONLY</h1>
+          <p className="lead">Ground console is for {words.doctors}.</p>
           <p>
-            Crew members use the Somacast phone app, which shows their own
-            forecast and the notes sent to them.
+            {capitalize(words.members)} use the Somacast phone app, which shows
+            their own forecast and the notes sent to them.
           </p>
         </section>
       </Shell>

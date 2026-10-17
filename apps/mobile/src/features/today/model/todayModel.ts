@@ -1,11 +1,15 @@
 import {
   assess,
+  capitalize,
   coachActions,
+  copy,
   indexByDay,
   metricIds,
+  metricLabel,
   metrics,
   type Alert,
   type CoachAction,
+  type Copy,
   type Forecast,
   type MetricId,
   type SimulationResult,
@@ -80,6 +84,7 @@ export function buildTodayView(
   sim: SimulationResult,
   crewId: string,
   day: number,
+  words: Copy = copy.space, // Space / Earth labels; the numbers and states never change
 ): TodayView {
   const crewName = sim.crew.find(c => c.id === crewId)?.name ?? crewId;
   const today = indexByDay(sim.readings, crewId).get(day);
@@ -87,9 +92,7 @@ export function buildTodayView(
 
   return {
     crewName,
-    dateLabel: today
-      ? `Mission day ${day} · ${today.date}`
-      : `Mission day ${day} · no data`,
+    dateLabel: `${capitalize(words.day)} ${day} · ${today?.date ?? 'no data'}`,
     state: forecast.state,
     confidence: forecast.confidence,
     reasons: forecast.reasons,
@@ -97,7 +100,7 @@ export function buildTodayView(
       const spec = metrics[a.metric];
       return {
         id: a.id,
-        metricLabel: spec.label,
+        metricLabel: metricLabel(a.metric, words),
         valueText: `${fmt(a.metric, a.value)} ${spec.unit}`,
         usualText: `usual ${fmt(a.metric, a.baseline)} ${spec.unit}`,
         zText: `z ${a.zscore.toFixed(1)}`,
@@ -116,7 +119,7 @@ export function buildTodayView(
     })),
     latest: metricIds.map(metric => ({
       metric,
-      label: metrics[metric].label,
+      label: metricLabel(metric, words),
       valueText: today ? fmt(metric, today[metric]) : '-',
       unit: metrics[metric].unit,
     })),

@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { ModeToggle } from './copy';
 
 // Every screen: wordmark, the SIMULATED DATA badge (always visible), and the safety footer.
 export function Shell({
@@ -22,6 +23,7 @@ export function Shell({
         >
           SIMULATED DATA
         </span>
+        <ModeToggle />
         {account && <div className="account">{account}</div>}
       </header>
       <main className="content">{children}</main>

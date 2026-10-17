@@ -4,6 +4,7 @@ import {
   type EvidenceItem,
   type LoggedHandoff,
 } from '../../data/ground';
+import { useCopy } from '../../shared/copy';
 import { utc } from '../../shared/format';
 import { WeatherStatus } from '../../shared/Weather';
 
@@ -27,6 +28,7 @@ type Props = { logged: LoggedHandoff | null; evidence: EvidenceItem[] };
 // The newest SBAR handoff from the crew, at the top of the crew page. Text is plain text, as the
 // phone's rules wrote it; React escapes it.
 export function HandoffPanel({ logged, evidence }: Props) {
+  const { words } = useCopy();
   if (!logged)
     return (
       <section className="handoff" aria-labelledby="handoff-title">
@@ -34,7 +36,8 @@ export function HandoffPanel({ logged, evidence }: Props) {
           <FileText size={24} aria-hidden="true" /> LATEST SBAR HANDOFF
         </h2>
         <p className="muted">
-          No handoff received yet. The crew's phone sends one at each AOS.
+          No handoff received yet. The {words.team}'s phone sends one{' '}
+          {words.eachLinkUp}.
         </p>
       </section>
     );
@@ -49,7 +52,8 @@ export function HandoffPanel({ logged, evidence }: Props) {
         {logged.state && <WeatherStatus state={logged.state} />}
       </div>
       <p className="muted small">
-        Made at AOS {utc(h.createdAt)}, received {utc(logged.receivedAt)}
+        Made {words.atLinkUp} {utc(h.createdAt)}, received{' '}
+        {utc(logged.receivedAt)}
       </p>
 
       <dl className="sbar">
@@ -108,8 +112,8 @@ export function HandoffPanel({ logged, evidence }: Props) {
         </ul>
       )}
       <p className="muted small">
-        {h.disclaimer} Severity comes from the engine's rules; the flight
-        surgeon decides.
+        {h.disclaimer} Severity comes from the engine's rules; the{' '}
+        {words.doctor} decides.
       </p>
     </section>
   );

@@ -5,13 +5,14 @@
 import React, { useMemo } from 'react';
 import { ActivityIndicator, StatusBar, StyleSheet, View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { theme } from '@somacast/core';
+import { capitalize, theme } from '@somacast/core';
 import { getSupabase, isBackendConfigured } from '../backend/supabase';
 import { useAuth } from '../features/auth/controller/useAuth';
 import { accountLabel, crewProblem } from '../features/auth/model/account';
 import { AccountNotice } from '../features/auth/view/AccountNotice';
 import { SignInScreen } from '../features/auth/view/SignInScreen';
 import { TodayScreen } from '../features/today/view/TodayScreen';
+import { CopyProvider, useCopy } from '../shared/copy/useCopy';
 import { simulateMission } from '../shared/model/simulateMission';
 
 // Sign-in gate before Today. Each account gets its own TodayScreen (key), so the outbox,
@@ -24,6 +25,7 @@ function Root() {
     [],
   );
   const { state } = auth;
+  const { words } = useCopy();
 
   switch (state.phase) {
     case 'loading':
@@ -59,9 +61,11 @@ function Root() {
       if (account.role === 'surgeon')
         return (
           <AccountNotice
-            label={accountLabel(account)}
-            title="FLIGHT SURGEON ACCOUNT"
-            message="This phone app is the crew view. Flight surgeons use the ground console, which reads every crew's log."
+            label={accountLabel(account, words)}
+            title={`${words.doctor.toUpperCase()} ACCOUNT`}
+            message={`This phone app is the ${words.team} view. ${capitalize(
+              words.doctors,
+            )} use the ground console, which reads every ${words.team}'s log.`}
             onSignOut={auth.signOut}
           />
         );
@@ -69,8 +73,8 @@ function Root() {
       if (problem)
         return (
           <AccountNotice
-            label={accountLabel(account)}
-            title="CREW NOT FOUND"
+            label={accountLabel(account, words)}
+            title={`${words.team.toUpperCase()} NOT FOUND`}
             message={problem}
             onSignOut={auth.signOut}
           />
@@ -91,7 +95,9 @@ function App() {
   return (
     <SafeAreaProvider>
       <StatusBar barStyle="light-content" />
-      <Root />
+      <CopyProvider>
+        <Root />
+      </CopyProvider>
     </SafeAreaProvider>
   );
 }

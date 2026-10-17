@@ -1,4 +1,4 @@
-import { scenarios, simulate } from '@somacast/core';
+import { copy, scenarios, simulate } from '@somacast/core';
 import { buildTodayView } from './todayModel';
 
 const base = { seed: 42, crewCount: 4, days: 90, startDate: '2027-01-01' };
@@ -54,6 +54,26 @@ describe('todayModel: buildTodayView', () => {
     const v = buildTodayView(normal, 'C1', 5);
     expect(v.confidence).toBe('low');
     expect(v.reasons.join(' ')).toMatch(/Low confidence/);
+  });
+
+  it('Earth wording: indoor CO2 and "Day"; nothing else changes', () => {
+    const space = buildTodayView(blackout, 'C1', 75);
+    const earth = buildTodayView(blackout, 'C1', 75, copy.earth);
+    const co2 = (v: typeof space) =>
+      v.latest.find(r => r.metric === 'cabinCo2')!.label;
+    expect(co2(space)).toBe('Cabin CO2 partial pressure');
+    expect(co2(earth)).toBe('Indoor CO2 partial pressure');
+    expect(earth.alerts.map(a => a.metricLabel)).toContain(
+      'Indoor CO2 partial pressure',
+    );
+    // Same state, same numbers: only the CO2 label differs.
+    expect(earth.dateLabel).toBe(space.dateLabel.replace('Mission day', 'Day'));
+    const relabel = (v: typeof space) =>
+      JSON.stringify({ ...v, dateLabel: '' }).replaceAll(
+        'Indoor CO2',
+        'Cabin CO2',
+      );
+    expect(relabel(earth)).toBe(relabel(space));
   });
 
   it('missing day: readings show "-" instead of a number', () => {
