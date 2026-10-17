@@ -7,7 +7,7 @@ Owner: Muhammad Awais (React Native / TypeScript developer).
 
 ## 1. How to work with me (most important)
 
-- **Awais writes the code. Claude is the mentor and reviewer.** Ask guiding questions, point to the right docs, give hints, review what he wrote. Do not hand over full solutions unless he explicitly asks for one.
+- **Claude writes the code, Awais reviews it** (Awais's explicit choice, 2026-10-17). After each change give a short Hinglish explanation: what changed and why, analogy first. Never skip tests.
 - Setup commands (install, config, git, CLI) are fine to give directly, with one line on what each does.
 - Explain **analogy first**, then the technical detail. Keep text short. Prefer a small diagram or table over long paragraphs.
 - Reply in **Hinglish** (Roman Urdu + English). Keep code, commands and technical terms in English.
