@@ -27,6 +27,24 @@ export {
 export { detectAnomalies, baselineFor } from './engine/anomaly';
 export { assess, type Assessment } from './engine/forecast';
 
+// coach: crew actions and the SBAR handoff to the flight surgeon (rules only, no LLM)
+export {
+  ILLUSTRATIVE,
+  MAX_COACH_ACTIONS,
+  coachRules,
+  coachActions,
+  isMedicationAdvice,
+  rankAlerts,
+  type CoachAction,
+} from './coach/coach';
+export {
+  HANDOFF_DISCLAIMER,
+  GROUND_REVIEW,
+  buildHandoff,
+  formatDuration,
+  type HandoffContext,
+} from './coach/handoff';
+
 // sync: black-box outbox that holds everything during LOS and sends it at AOS
 export {
   MemoryOutboxStore,

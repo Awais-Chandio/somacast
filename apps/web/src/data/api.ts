@@ -1,5 +1,10 @@
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { isTestCrew, type IndexRow, type ReadingRow } from './ground';
+import {
+  isTestCrew,
+  type IndexRow,
+  type PayloadRow,
+  type ReadingRow,
+} from './ground';
 
 // The console's Supabase calls. RLS lets a flight surgeon read every crew's log and notes, and
 // insert notes signed with their own id; nothing here can edit or delete the log.
@@ -54,12 +59,55 @@ export function fetchReadings(
   });
 }
 
+// The newest SBAR handoff this crew sent (kind crew_action, payload.type 'handoff'), or null.
+// Newest by the time it was made at AOS (ts), then by arrival.
+export async function fetchLatestHandoff(
+  client: SupabaseClient,
+  crewId: string,
+): Promise<PayloadRow | null> {
+  const { data, error } = await client
+    .from('log_entries')
+    .select('key, crew_id, received_at, payload')
+    .eq('crew_id', crewId)
+    .eq('kind', 'crew_action')
+    .eq('payload->>type', 'handoff')
+    .order('ts', { ascending: false })
+    .order('received_at', { ascending: false })
+    .limit(1);
+  if (error) throw new Error(error.message);
+  return data?.[0] ?? null;
+}
+
+// The logged alerts a handoff names as evidence, from the same simulated scenario.
+export async function fetchLoggedAlerts(
+  client: SupabaseClient,
+  crewId: string,
+  ids: string[],
+  scenario: string | null,
+): Promise<PayloadRow[]> {
+  if (ids.length === 0) return [];
+  let q = client
+    .from('log_entries')
+    .select('key, crew_id, received_at, payload')
+    .eq('crew_id', crewId)
+    .eq('kind', 'alert')
+    .in('payload->>id', ids);
+  if (scenario) q = q.eq('payload->>scenario', scenario);
+  const { data, error } = await q.order('received_at').limit(1000);
+  if (error) throw new Error(error.message);
+  return data ?? [];
+}
+
+// author_name is stamped by the database from the author's profile (see the uplink_notes trigger).
 export type Note = {
   id: string;
   crew_id: string;
   text: string;
   created_at: string;
+  author_name: string | null;
 };
+
+const NOTE_COLUMNS = 'id, crew_id, text, created_at, author_name';
 
 export async function fetchNotes(
   client: SupabaseClient,
@@ -67,7 +115,7 @@ export async function fetchNotes(
 ): Promise<Note[]> {
   const { data, error } = await client
     .from('uplink_notes')
-    .select('id, crew_id, text, created_at')
+    .select(NOTE_COLUMNS)
     .eq('crew_id', crewId)
     .order('created_at', { ascending: false })
     .limit(50);
@@ -87,7 +135,7 @@ export async function sendNote(
   const { data, error } = await client
     .from('uplink_notes')
     .insert({ crew_id: crewId, author: authorId, text })
-    .select('id, crew_id, text, created_at')
+    .select(NOTE_COLUMNS)
     .single();
   if (error) throw new Error(`Note not sent: ${error.message}`);
   return data;

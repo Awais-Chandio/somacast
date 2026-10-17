@@ -1,13 +1,18 @@
 import { describe, expect, it } from 'vitest';
-import { assess, scenarios, simulate } from '@somacast/core';
+import { assess, buildHandoff, scenarios, simulate } from '@somacast/core';
 import {
+  alertDomId,
   assessCrew,
+  evidenceItems,
   formatDuration,
   losTimeline,
   noteProblem,
+  parseAlertRows,
+  parseHandoffRow,
   rowsToReadings,
   sparklines,
   summarizeCrews,
+  type PayloadRow,
   type ReadingRow,
 } from './ground';
 
@@ -248,5 +253,96 @@ describe('format helpers', () => {
     expect(num(62)).toBe('62');
     expect(withUnit(3, '1 to 5')).toBe('3 (1 to 5)');
     expect(withUnit(56.04, 'bpm')).toBe('56 bpm');
+  });
+});
+
+describe('SBAR handoff (Kenji, blackout decline, day 75)', () => {
+  const kenji = decline.crew.find(c => c.id === 'C2')!;
+  const day75 = assess(decline.readings, 'C2', 75);
+  const handoff = buildHandoff(
+    decline.readings,
+    day75.alerts,
+    day75.forecast,
+    kenji,
+    {
+      id: 'handoff-blackoutDecline-C2-75-1',
+      createdAt: '2026-10-17T14:05:00.000Z',
+      asOfDay: 75,
+      blackout: {
+        start: '2026-10-17T13:58:00.000Z',
+        end: '2026-10-17T14:05:00.000Z',
+      },
+      heldEntries: 312,
+    },
+  );
+  // What the phone uploads (see apps/mobile/src/features/ground/model/handoff.ts).
+  const row: PayloadRow = {
+    key: `C2:crew_action:${handoff.id}`,
+    crew_id: 'C2',
+    received_at: at(30),
+    payload: {
+      type: 'handoff',
+      scenario: 'blackoutDecline',
+      state: 'storm',
+      ...handoff,
+    },
+  };
+  const alertRow = (a: (typeof day75.alerts)[number]): PayloadRow => ({
+    key: `C2:alert:blackoutDecline-C2-75-alert-${a.metric}`,
+    crew_id: 'C2',
+    received_at: at(29),
+    payload: { ...a, scenario: 'blackoutDecline' },
+  });
+
+  it('reads the handoff the phone sent', () => {
+    const h = parseHandoffRow(row)!;
+    expect(h.handoff).toEqual(handoff);
+    expect(h.scenario).toBe('blackoutDecline');
+    expect(h.state).toBe('storm');
+    expect(h.receivedAt).toBe(at(30));
+  });
+
+  it('refuses a handoff stored under another crew, a test crew or a non-handoff', () => {
+    expect(parseHandoffRow({ ...row, crew_id: 'C1' })).toBe(null);
+    expect(parseHandoffRow({ ...row, crew_id: 'ZZ-TEST' })).toBe(null);
+    expect(
+      parseHandoffRow({ ...row, payload: { ...row.payload, type: 'note' } }),
+    ).toBe(null);
+    expect(
+      parseHandoffRow({ ...row, payload: { ...row.payload, disclaimer: '' } }),
+    ).toBe(null);
+  });
+
+  it('evidence links to the alerts on the page, in the handoff order', () => {
+    const items = evidenceItems(handoff, [], day75.alerts);
+    expect(items.map(i => i.alertId)).toEqual(handoff.evidence);
+    for (const i of items) {
+      expect(i.onPage).toBe(true);
+      expect(i.reason).toMatch(/for \d+ days in a row/);
+    }
+    expect(items[0]!.label).toBe('Sleep duration');
+    expect(alertDomId(items[0]!.alertId)).toBe(
+      'alert-C2-sleepHours-2027-03-17',
+    );
+  });
+
+  it('evidence not on the page falls back to the logged alert, then to the bare id', () => {
+    const logged = parseAlertRows(day75.alerts.map(alertRow));
+    expect(logged).toEqual(day75.alerts);
+    const fromLog = evidenceItems(handoff, logged, []);
+    expect(fromLog.every(i => !i.onPage && i.reason !== null)).toBe(true);
+    const missing = evidenceItems(handoff, [], []);
+    expect(missing[0]).toEqual({
+      alertId: handoff.evidence[0],
+      label: handoff.evidence[0],
+      reason: null,
+      severity: null,
+      onPage: false,
+    });
+  });
+
+  it('logged alert rows that claim another crew are dropped', () => {
+    const a = day75.alerts[0]!;
+    expect(parseAlertRows([{ ...alertRow(a), crew_id: 'C1' }])).toEqual([]);
   });
 });

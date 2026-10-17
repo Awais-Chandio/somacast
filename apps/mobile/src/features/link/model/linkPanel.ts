@@ -5,10 +5,29 @@ import {
   type OutboxStore,
   type Transport,
 } from '@somacast/core';
+import type { GroundMode } from './groundChoice';
 
 // Model for the link panel: pure functions, no React. The hook wires them to state.
 
 export type Link = 'AOS' | 'LOS'; // acquisition / loss of signal
+
+// One AOS: when the link dropped, when it came back, and how much the black box held meanwhile.
+export type AosContact = {
+  losSince: string; // ISO time the link went down (or the app opened, which always starts in LOS)
+  aosAt: string; // ISO time the link came back
+  held: number; // outbox entries waiting at AOS
+};
+
+// A finished AOS: the backlog and the entries made at AOS (e.g. the SBAR handoff) were all
+// acknowledged by `ground`.
+export type GroundContact = AosContact & {
+  ground: GroundMode;
+  sent: LogEntry[];
+};
+
+// A sync that ended with everything acknowledged (the count check may still have failed).
+export const syncSucceeded = (s: SyncStatus | null): boolean =>
+  s?.phase === 'synced' || s?.phase === 'unverified';
 
 // Optional extras a store can offer; each has a slower fallback that uses only the core interface.
 // batch: many writes in one transaction. countKeysLike: SQL LIKE count on keys. clear: empty the outbox.

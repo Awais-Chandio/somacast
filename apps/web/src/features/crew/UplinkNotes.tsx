@@ -86,9 +86,10 @@ export function UplinkNotes({ crewName, notes, onSend }: Props) {
         <ul className="note-list">
           {shown.map(n => (
             <li key={n.id}>
-              <time className="muted small" dateTime={n.created_at}>
-                {utc(n.created_at)}
-              </time>
+              <p className="muted small">
+                {n.author_name ?? 'Flight surgeon'},{' '}
+                <time dateTime={n.created_at}>{utc(n.created_at)}</time>
+              </p>
               <p className="note-text">{n.text}</p>
             </li>
           ))}

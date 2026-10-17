@@ -77,6 +77,7 @@ export function useTodayController(
     scenario,
     day,
     maxDay: MAX_DAY,
+    sim,
     view,
     selectCrew: setCrewId,
     selectScenario: setScenario,

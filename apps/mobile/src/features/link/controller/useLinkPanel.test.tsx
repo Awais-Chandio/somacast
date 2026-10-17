@@ -1,12 +1,19 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
-import { MemoryOutboxStore, createRng } from '@somacast/core';
+import {
+  MemoryOutboxStore,
+  createRng,
+  enqueue,
+  idempotencyKey,
+  type LogEntry,
+} from '@somacast/core';
 import {
   useLinkPanel,
   type LinkPanelController,
   type RemoteGround,
 } from './useLinkPanel';
 import { forgetGroundChoice } from '../model/groundChoice';
+import type { AosContact } from '../model/linkPanel';
 
 async function renderPanel(
   store = new MemoryOutboxStore(),
@@ -231,6 +238,129 @@ describe('useLinkPanel', () => {
       expect(p().ground).toBe('demo');
       await p.setRemote(remote);
       expect(p().ground).toBe('supabase');
+    });
+  });
+
+  describe('AOS handoff (atAos)', () => {
+    const entry = (
+      id: string,
+      kind: LogEntry['kind'] = 'reading',
+    ): LogEntry => ({
+      id,
+      crewId: 'C2',
+      timestamp: '2027-03-17T00:00:00.000Z',
+      kind,
+      payload: { type: kind === 'crew_action' ? 'handoff' : undefined },
+    });
+
+    // A clock that moves 5 minutes per reading, so LOS and AOS get different times.
+    function stepClock(start = Date.parse('2026-10-17T14:00:00.000Z')) {
+      let t = start;
+      return () => {
+        const d = new Date(t);
+        t += 5 * 60_000;
+        return d;
+      };
+    }
+
+    async function renderWithAos(
+      remote: RemoteGround | null,
+      atAos: (c: AosContact) => LogEntry[],
+      store = new MemoryOutboxStore(),
+    ) {
+      const ref: { current: LinkPanelController | null } = { current: null };
+      const now = stepClock();
+      const random = createRng(11).next;
+      function Probe() {
+        ref.current = useLinkPanel(store, { random, remote, atAos, now });
+        return null;
+      }
+      await ReactTestRenderer.act(() => {
+        ReactTestRenderer.create(<Probe />);
+      });
+      return { get: () => ref.current as LinkPanelController, store };
+    }
+
+    it('sends the backlog, then the handoff in the same AOS, and reports the contact', async () => {
+      const { remote, rows } = fakeRemote();
+      const seen: AosContact[] = [];
+      const handoff = entry('handoff-1', 'crew_action');
+      const store = new MemoryOutboxStore();
+      enqueue(store, entry('r1'));
+      enqueue(store, entry('r2'));
+      const { get } = await renderWithAos(
+        remote,
+        c => {
+          seen.push(c);
+          expect(rows.size).toBe(2); // the backlog is home before the handoff is made
+          return [handoff];
+        },
+        store,
+      );
+      expect(get().contact).toBe(null);
+
+      await act(() => get().toggleLink());
+      expect(seen).toEqual([
+        {
+          losSince: '2026-10-17T14:00:00.000Z',
+          aosAt: '2026-10-17T14:05:00.000Z',
+          held: 2,
+        },
+      ]);
+      expect(rows.has(idempotencyKey(handoff))).toBe(true);
+      expect(get().outbox.total).toBe(0);
+      expect(get().contact).toEqual({
+        ...seen[0],
+        ground: 'supabase',
+        sent: [handoff],
+      });
+    });
+
+    it('LOS restarts the blackout clock; the next AOS makes a new contact', async () => {
+      const { remote } = fakeRemote();
+      const seen: AosContact[] = [];
+      const { get } = await renderWithAos(remote, c => {
+        seen.push(c);
+        return [];
+      });
+      await act(() => get().toggleLink()); // AOS at 14:05
+      await act(() => get().toggleLink()); // LOS at 14:10
+      await act(() => get().toggleLink()); // AOS at 14:15
+      expect(seen.map(c => [c.losSince, c.aosAt])).toEqual([
+        ['2026-10-17T14:00:00.000Z', '2026-10-17T14:05:00.000Z'],
+        ['2026-10-17T14:10:00.000Z', '2026-10-17T14:15:00.000Z'],
+      ]);
+      expect(get().contact?.aosAt).toBe('2026-10-17T14:15:00.000Z');
+    });
+
+    it('ground refuses the backlog: no handoff is made, no contact', async () => {
+      const { remote } = fakeRemote({ refuse: true });
+      const atAos = jest.fn(() => [entry('handoff-x', 'crew_action')]);
+      const store = new MemoryOutboxStore();
+      enqueue(store, entry('r1'));
+      const { get } = await renderWithAos(remote, atAos, store);
+      await act(() => get().toggleLink());
+      expect(atAos).not.toHaveBeenCalled();
+      expect(get().contact).toBe(null);
+      expect(get().outbox.total).toBe(1);
+    });
+
+    it('demo ground: the contact says so (no notes to fetch there)', async () => {
+      const { get } = await renderWithAos(null, () => [
+        entry('handoff-d', 'crew_action'),
+      ]);
+      await act(() => get().toggleLink());
+      expect(get().contact?.ground).toBe('demo');
+      expect(get().groundRows()).toBe(1);
+    });
+
+    it('a demo reset clears the contact', async () => {
+      const { get } = await renderWithAos(null, () => []);
+      await act(() => get().toggleLink());
+      expect(get().contact).not.toBe(null);
+      await act(() => get().toggleLink());
+      await act(async () => get().resetDemo());
+      expect(get().contact).toBe(null);
     });
   });
 });

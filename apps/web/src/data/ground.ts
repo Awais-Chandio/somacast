@@ -1,12 +1,18 @@
 import {
+  AlertSchema,
   assess,
   baselineFor,
+  HandoffSchema,
   indexByDay,
   metricIds,
+  metrics,
   ReadingSchema,
   simulatedCrewName,
+  type Alert,
   type Assessment,
   type DailyReading,
+  type Forecast,
+  type Handoff,
   type MetricId,
 } from '@somacast/core';
 
@@ -17,6 +23,14 @@ import {
 // What the console reads from log_entries. received_at is set by the database on arrival.
 export type IndexRow = { crew_id: string; received_at: string };
 export type ReadingRow = {
+  key: string;
+  crew_id: string;
+  received_at: string;
+  payload: Record<string, unknown>;
+};
+
+// A black-box row with its payload: an SBAR handoff (kind crew_action) or a logged alert (kind alert).
+export type PayloadRow = {
   key: string;
   crew_id: string;
   received_at: string;
@@ -235,6 +249,79 @@ export function losTimeline(
     });
   return out;
 }
+
+// ------------------------------------------------------------------ SBAR handoff
+
+// The handoff the phone sent at AOS, as the surgeon reads it. The text is shown as written by the
+// phone's rules (plain text); the console adds nothing to it.
+export type LoggedHandoff = {
+  handoff: Handoff;
+  receivedAt: string;
+  scenario: string | null;
+  state: Forecast['state'] | null; // the forecast word at handoff time
+};
+
+const STATES = ['clear', 'cloudy', 'storm'] as const;
+const isState = (v: unknown): v is Forecast['state'] =>
+  STATES.includes(v as Forecast['state']);
+
+// null unless the row is a valid handoff for the crew it was stored under (the RLS-checked column).
+export function parseHandoffRow(row: PayloadRow): LoggedHandoff | null {
+  if (isTestCrew(row.crew_id) || row.payload.type !== 'handoff') return null;
+  const parsed = HandoffSchema.safeParse(row.payload);
+  if (!parsed.success || parsed.data.crewId !== row.crew_id) return null;
+  const { scenario, state } = row.payload;
+  return {
+    handoff: parsed.data,
+    receivedAt: row.received_at,
+    scenario: typeof scenario === 'string' ? scenario : null,
+    state: isState(state) ? state : null,
+  };
+}
+
+// Alerts as the phone logged them (payload = Alert + scenario). Invalid or foreign rows are dropped.
+export function parseAlertRows(rows: PayloadRow[]): Alert[] {
+  const out: Alert[] = [];
+  for (const row of rows) {
+    const parsed = AlertSchema.safeParse(row.payload);
+    if (parsed.success && parsed.data.crewId === row.crew_id)
+      out.push(parsed.data);
+  }
+  return out;
+}
+
+export type EvidenceItem = {
+  alertId: string;
+  label: string; // "Sleep duration", or the id when the alert was never received
+  reason: string | null;
+  severity: Alert['severity'] | null;
+  onPage: boolean; // the same alert is in this page's alert list, so the item links to it
+};
+
+// One item per evidence id, in the handoff's order. The alert list on the page wins (same id =
+// same metric and day); otherwise the alert as the phone logged it.
+export function evidenceItems(
+  handoff: Handoff,
+  logged: Alert[],
+  current: Alert[],
+): EvidenceItem[] {
+  return handoff.evidence.map(id => {
+    const onPage = current.find(a => a.id === id);
+    const a = onPage ?? logged.find(x => x.id === id);
+    return {
+      alertId: id,
+      label: a ? metrics[a.metric].label : id,
+      reason: a?.reason ?? null,
+      severity: a?.severity ?? null,
+      onPage: Boolean(onPage),
+    };
+  });
+}
+
+// DOM id of an alert card, so an evidence link can jump to it (the hash is taken by the router).
+export const alertDomId = (alertId: string) => `alert-${alertId}`;
+
+// ------------------------------------------------------------------ uplink notes
 
 export const MAX_NOTE_LENGTH = 2000;
 

@@ -35,6 +35,21 @@ describe('todayModel: buildTodayView', () => {
     }
   });
 
+  it('coach actions: Kenji day 75 gets up to 3, each from one of his alerts; a Clear day gets none', () => {
+    const v = buildTodayView(blackout, 'C2', 75);
+    expect(v.actions.length).toBeGreaterThan(0);
+    expect(v.actions.length).toBeLessThanOrEqual(3);
+    for (const a of v.actions) {
+      expect(a.fromText).toMatch(/^From: .+ alert$/);
+      expect(a.whenText).toBe('Today'); // Storm
+      expect(a.label).toBe('illustrative, expert review required');
+    }
+    expect(v.actions[0]!.text).toBe(
+      'Protect your next sleep window; ask the CMO about the schedule.',
+    );
+    expect(buildTodayView(normal, 'C1', 60).actions).toEqual([]);
+  });
+
   it('day 5: low confidence while the baseline is still learning', () => {
     const v = buildTodayView(normal, 'C1', 5);
     expect(v.confidence).toBe('low');

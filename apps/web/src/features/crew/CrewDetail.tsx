@@ -4,16 +4,22 @@ import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
 import { metrics } from '@somacast/core';
 import {
   fetchIndex,
+  fetchLatestHandoff,
+  fetchLoggedAlerts,
   fetchNotes,
   fetchReadings,
   sendNote,
   type Note,
 } from '../../data/api';
 import {
+  alertDomId,
   assessCrew,
   crewName,
+  evidenceItems,
   isTestCrew,
   losTimeline,
+  parseAlertRows,
+  parseHandoffRow,
   rowsToReadings,
   sparklines,
   summarizeCrews,
@@ -21,19 +27,36 @@ import {
 import { count, num, utc, withUnit } from '../../shared/format';
 import { useLoad } from '../../shared/useLoad';
 import { WeatherStatus } from '../../shared/Weather';
+import { HandoffPanel } from './HandoffPanel';
 import { LosTimeline } from './LosTimeline';
 import { Sparkline } from './Sparkline';
 import { UplinkNotes } from './UplinkNotes';
 
 async function loadCrew(client: SupabaseClient, crewId: string) {
-  const [index, readingRows, notes] = await Promise.all([
+  const [index, readingRows, notes, handoffRow] = await Promise.all([
     fetchIndex(client, crewId),
     fetchReadings(client, crewId),
     fetchNotes(client, crewId),
+    fetchLatestHandoff(client, crewId),
   ]);
   const readings = rowsToReadings(readingRows).get(crewId);
   const assessment = assessCrew(readings);
+  const handoff = handoffRow ? parseHandoffRow(handoffRow) : null;
+  const logged = handoff
+    ? parseAlertRows(
+        await fetchLoggedAlerts(
+          client,
+          crewId,
+          handoff.handoff.evidence,
+          handoff.scenario,
+        ),
+      )
+    : [];
   return {
+    handoff,
+    evidence: handoff
+      ? evidenceItems(handoff.handoff, logged, assessment?.alerts ?? [])
+      : [],
     summary: summarizeCrews(index)[0] ?? null,
     readings,
     assessment,
@@ -116,6 +139,8 @@ function CrewBody({
   const alerting = new Set(a?.alerts.map(x => x.metric));
   return (
     <>
+      <HandoffPanel logged={data.handoff} evidence={data.evidence} />
+
       <div className="hero">
         {a ? (
           <>
@@ -169,7 +194,12 @@ function CrewBody({
           {a.alerts.map(al => {
             const spec = metrics[al.metric];
             return (
-              <li key={al.id} className={`alert alert-${al.severity}`}>
+              <li
+                key={al.id}
+                id={alertDomId(al.id)}
+                tabIndex={-1}
+                className={`alert alert-${al.severity}`}
+              >
                 <p className="alert-head">
                   <AlertTriangle size={24} aria-hidden="true" />
                   <strong>{spec.label}</strong>

@@ -1,8 +1,8 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { theme } from '@somacast/core';
+import { theme, type LogEntry } from '@somacast/core';
 import { Chip, SectionLabel } from '../../../shared/components';
 import { getDeviceOutbox } from '../../../sync/SqliteOutboxStore';
 import {
@@ -16,9 +16,15 @@ import {
   type RemoteGround,
 } from '../../link/controller/useLinkPanel';
 import { LinkPanel } from '../../link/view/LinkPanel';
+import type { AosContact } from '../../link/model/linkPanel';
+import { useGroundNotes } from '../../ground/controller/useGroundNotes';
+import { handoffCardView, handoffEntry } from '../../ground/model/handoff';
+import { GroundNotes } from '../../ground/view/GroundNotes';
+import { HandoffSentCard } from '../../ground/view/HandoffSentCard';
 import { ff, fs } from '../../../shared/theme/typography';
 import { demoMissionFor } from '../../../config/mission';
 import { useTodayController } from '../controller/useTodayController';
+import { ActionCard } from './ActionCard';
 import { AlertCard } from './AlertCard';
 import { DayStepper } from './DayStepper';
 import { ForecastCard } from './ForecastCard';
@@ -46,9 +52,13 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
         : null,
     [client, crewId],
   );
+  // At AOS the link panel asks for the SBAR handoff of the day on screen. The Today controller
+  // is created after the link panel (it needs link.refresh), so the panel reads it through a ref.
+  const handoffAt = useRef<(contact: AosContact) => LogEntry[]>(() => []);
   const link = useLinkPanel(outbox, {
     remote,
     accountId: account?.userId ?? null,
+    atAos: contact => handoffAt.current(contact),
   });
   // Signed in: the account's own scenario and demo day; its whole mission goes into the black box.
   const mission = useMemo(
@@ -63,6 +73,12 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
     mission,
   );
   const { view } = c;
+  handoffAt.current = contact => {
+    const e = handoffEntry(c.sim, c.scenario, c.crewId, c.day, contact);
+    return e ? [e] : [];
+  };
+  const handoff = link.contact ? handoffCardView(link.contact) : null;
+  const notes = useGroundNotes(client, crewId, link.contact);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
@@ -75,6 +91,9 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
       <LinkPanel link={link} crewId={c.crewId} />
 
       <ScrollView contentContainerStyle={styles.content}>
+        {handoff && <HandoffSentCard view={handoff} />}
+        {client && crewId && <GroundNotes state={notes} />}
+
         <SectionLabel>CREW MEMBER</SectionLabel>
         <View style={styles.row}>
           {c.crew.map(m => (
@@ -124,6 +143,14 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
         )}
         {view.alerts.map(a => (
           <AlertCard key={a.id} alert={a} />
+        ))}
+
+        <SectionLabel>ACTIONS (ILLUSTRATIVE)</SectionLabel>
+        {view.actions.length === 0 && (
+          <Text style={styles.muted}>No actions: no alerts for this day.</Text>
+        )}
+        {view.actions.map(a => (
+          <ActionCard key={a.id} action={a} />
         ))}
 
         <SectionLabel>LATEST READINGS (SIMULATED)</SectionLabel>

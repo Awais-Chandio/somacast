@@ -1,9 +1,11 @@
 import {
   assess,
+  coachActions,
   indexByDay,
   metricIds,
   metrics,
   type Alert,
+  type CoachAction,
   type Forecast,
   type MetricId,
   type SimulationResult,
@@ -24,6 +26,15 @@ export type AlertView = {
   reason: string;
 };
 
+// A coach action: what to do, which alert it comes from, and the illustrative label.
+export type ActionView = {
+  id: string;
+  text: string;
+  fromText: string; // "From: Sleep duration alert"
+  whenText: string; // "Today" or "Next 72 h"
+  label: CoachAction['label'];
+};
+
 export type LatestView = {
   metric: MetricId;
   label: string;
@@ -38,6 +49,7 @@ export type TodayView = {
   confidence: Forecast['confidence'];
   reasons: string[];
   alerts: AlertView[];
+  actions: ActionView[];
   latest: LatestView[];
 };
 
@@ -95,6 +107,13 @@ export function buildTodayView(
         reason: a.reason,
       };
     }),
+    actions: coachActions(alerts, forecast).map(a => ({
+      id: a.id,
+      text: a.text,
+      fromText: `From: ${a.alertLabel}`,
+      whenText: a.when === 'today' ? 'Today' : 'Next 72 h',
+      label: a.label,
+    })),
     latest: metricIds.map(metric => ({
       metric,
       label: metrics[metric].label,
