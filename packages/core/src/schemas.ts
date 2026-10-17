@@ -34,7 +34,9 @@ export const EffectSchema = z
     kind: z.enum(['ramp', 'step']),
     delta: z.number(),
   })
-  .refine(e => e.endDay >= e.startDay, { message: 'endDay must be >= startDay' });
+  .refine(e => e.endDay >= e.startDay, {
+    message: 'endDay must be >= startDay',
+  });
 
 export const ScenarioSchema = z.object({
   id: z.string().min(1),

@@ -18,7 +18,9 @@ export function createRng(seed: number): Rng {
   const normal = (mean: number, sd: number): number => {
     const u1 = Math.max(next(), 1e-12);
     const u2 = next();
-    return mean + sd * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2);
+    return (
+      mean + sd * Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+    );
   };
 
   return { next, normal };

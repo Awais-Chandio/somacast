@@ -1,7 +1,17 @@
 import { metricIds, metrics, type MetricId } from './metrics';
 import type { Alert, DailyReading } from './schemas';
-import { badDirection, thresholds as defaults, type Thresholds } from './thresholds';
-import { computeBaseline, indexByDay, zScore, type Baseline, type DayIndex } from './baseline';
+import {
+  badDirection,
+  thresholds as defaults,
+  type Thresholds,
+} from './thresholds';
+import {
+  computeBaseline,
+  indexByDay,
+  zScore,
+  type Baseline,
+  type DayIndex,
+} from './baseline';
 
 // Positive "badness": how far past baseline in the bad direction.
 function badZ(metric: MetricId, z: number): number {
@@ -15,9 +25,19 @@ function fmt(n: number): string {
 // Anchored baseline: learned from the first baselineWindow days (never from the days being checked), then frozen.
 // Like taking a tailor's measurements once: a slow change later still shows up against them.
 // Re-baselining (for example by the flight surgeon) is future work.
-export function baselineFor(index: DayIndex, metric: MetricId, asOfDay: number, t: Thresholds = defaults): Baseline | null {
+export function baselineFor(
+  index: DayIndex,
+  metric: MetricId,
+  asOfDay: number,
+  t: Thresholds = defaults,
+): Baseline | null {
   const streakStart = asOfDay - t.alertDays + 1;
-  const b = computeBaseline(index, metric, 0, Math.min(streakStart, t.baselineWindow));
+  const b = computeBaseline(
+    index,
+    metric,
+    0,
+    Math.min(streakStart, t.baselineWindow),
+  );
   if (!b || b.n < t.learningDays) return null; // still learning
   return b;
 }

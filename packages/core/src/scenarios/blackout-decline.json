@@ -3,10 +3,45 @@
   "title": "Blackout with a slow decline",
   "description": "During a multi-day blackout, crew member C2's sleep drops, heart rate rises, HRV falls and mood dips while cabin CO2 creeps up (ConOps scenario S2). Values are illustrative.",
   "effects": [
-    { "metric": "sleepHours", "crew": ["C2"], "startDay": 45, "endDay": 75, "kind": "ramp", "delta": -1.5 },
-    { "metric": "restingHr", "crew": ["C2"], "startDay": 45, "endDay": 75, "kind": "ramp", "delta": 6 },
-    { "metric": "hrv", "crew": ["C2"], "startDay": 45, "endDay": 75, "kind": "ramp", "delta": -10 },
-    { "metric": "psychCheckin", "crew": ["C2"], "startDay": 50, "endDay": 75, "kind": "ramp", "delta": -1 },
-    { "metric": "cabinCo2", "crew": "all", "startDay": 45, "endDay": 75, "kind": "ramp", "delta": 1.5 }
+    {
+      "metric": "sleepHours",
+      "crew": ["C2"],
+      "startDay": 45,
+      "endDay": 75,
+      "kind": "ramp",
+      "delta": -1.5
+    },
+    {
+      "metric": "restingHr",
+      "crew": ["C2"],
+      "startDay": 45,
+      "endDay": 75,
+      "kind": "ramp",
+      "delta": 6
+    },
+    {
+      "metric": "hrv",
+      "crew": ["C2"],
+      "startDay": 45,
+      "endDay": 75,
+      "kind": "ramp",
+      "delta": -10
+    },
+    {
+      "metric": "psychCheckin",
+      "crew": ["C2"],
+      "startDay": 50,
+      "endDay": 75,
+      "kind": "ramp",
+      "delta": -1
+    },
+    {
+      "metric": "cabinCo2",
+      "crew": "all",
+      "startDay": 45,
+      "endDay": 75,
+      "kind": "ramp",
+      "delta": 1.5
+    }
   ]
 }

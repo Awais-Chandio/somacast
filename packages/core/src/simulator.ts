@@ -3,7 +3,13 @@ import { metrics, type MetricId } from './metrics';
 import type { Crew, DailyReading, Effect, Scenario } from './schemas';
 
 const CREW_NAMES = ['Maya', 'Kenji', 'Amara', 'Luis'];
-const PERSONAL: MetricId[] = ['restingHr', 'hrv', 'sleepHours', 'exerciseMin', 'psychCheckin'];
+const PERSONAL: MetricId[] = [
+  'restingHr',
+  'hrv',
+  'sleepHours',
+  'exerciseMin',
+  'psychCheckin',
+];
 
 export type SimulationOptions = {
   seed: number;
@@ -19,7 +25,11 @@ export type SimulationResult = {
 };
 
 function addDays(startDate: string, day: number): string {
-  const [y, m, d] = startDate.split('-').map(Number) as [number, number, number];
+  const [y, m, d] = startDate.split('-').map(Number) as [
+    number,
+    number,
+    number,
+  ];
   const date = new Date(Date.UTC(y, m - 1, d + day));
   return date.toISOString().slice(0, 10);
 }
@@ -33,7 +43,12 @@ function clamp(value: number, min: number, max: number): number {
 }
 
 // How much a scenario shifts one metric for one crew member on one day.
-export function effectDelta(effects: Effect[], metric: MetricId, crewId: string, day: number): number {
+export function effectDelta(
+  effects: Effect[],
+  metric: MetricId,
+  crewId: string,
+  day: number,
+): number {
   let total = 0;
   for (const e of effects) {
     if (e.metric !== metric) continue;
@@ -69,8 +84,14 @@ export function simulate(options: SimulationOptions): SimulationResult {
 
   const readings: DailyReading[] = [];
   for (let day = 0; day < days; day++) {
-    const co2 = rng.normal(metrics.cabinCo2.baselineMean, metrics.cabinCo2.withinSd);
-    const dose = rng.normal(metrics.radiationDose.baselineMean, metrics.radiationDose.withinSd);
+    const co2 = rng.normal(
+      metrics.cabinCo2.baselineMean,
+      metrics.cabinCo2.withinSd,
+    );
+    const dose = rng.normal(
+      metrics.radiationDose.baselineMean,
+      metrics.radiationDose.withinSd,
+    );
     const restDay = day % 7 === 6;
 
     for (const member of crew) {
@@ -85,7 +106,8 @@ export function simulate(options: SimulationOptions): SimulationResult {
       const exercise = noisy('exerciseMin', exerciseMean);
       const psych = noisy('psychCheckin', means.psychCheckin as number);
 
-      const d = (metric: MetricId): number => effectDelta(scenario.effects, metric, member.id, day);
+      const d = (metric: MetricId): number =>
+        effectDelta(scenario.effects, metric, member.id, day);
 
       readings.push({
         crewId: member.id,

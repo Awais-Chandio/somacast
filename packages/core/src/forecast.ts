@@ -1,11 +1,17 @@
 import { metricIds, metrics, type MetricId } from './metrics';
 import type { Alert, DailyReading, Forecast } from './schemas';
-import { badDirection, thresholds as defaults, type Thresholds } from './thresholds';
+import {
+  badDirection,
+  thresholds as defaults,
+  type Thresholds,
+} from './thresholds';
 import { indexByDay, zScore } from './baseline';
 import { baselineFor, detectAnomalies } from './anomaly';
 
 // Least-squares slope and intercept for points (x, y).
-function fitLine(points: Array<[number, number]>): { slope: number; intercept: number } | null {
+function fitLine(
+  points: Array<[number, number]>,
+): { slope: number; intercept: number } | null {
   const n = points.length;
   if (n < 3) return null;
   const mx = points.reduce((a, p) => a + p[0], 0) / n;
@@ -31,7 +37,12 @@ export type Assessment = {
 // Cloudy: any personal alert, any cabin (environment) alert, or a trend projected past the alert line within 72 h.
 // Clear:  none of the above.
 // Confidence is low with under learningDays of history or too many missing days in the last 7.
-export function assess(readings: DailyReading[], crewId: string, asOfDay: number, t: Thresholds = defaults): Assessment {
+export function assess(
+  readings: DailyReading[],
+  crewId: string,
+  asOfDay: number,
+  t: Thresholds = defaults,
+): Assessment {
   const index = indexByDay(readings, crewId);
   const today = index.get(asOfDay);
   const date = today?.date ?? 'unknown';
@@ -55,27 +66,38 @@ export function assess(readings: DailyReading[], crewId: string, asOfDay: number
     const line = fitLine(pts);
     if (!line) continue;
     const sign = badDirection[metric] === 'high' ? 1 : -1;
-    const projected = line.intercept + line.slope * (asOfDay + t.forecastHorizonDays);
+    const projected =
+      line.intercept + line.slope * (asOfDay + t.forecastHorizonDays);
     const badProjected = sign * zScore(projected, baseline);
     const last3 = pts.slice(-3).map(p => sign * zScore(p[1], baseline));
     const badNow = last3.reduce((a, b) => a + b, 0) / Math.max(1, last3.length);
     if (badProjected > t.zAlert && badNow > t.zTrendNow) {
       trending.push(metric);
       const spec = metrics[metric];
-      reasons.push(`${spec.label} is trending ${badDirection[metric] === 'high' ? 'up' : 'down'} and may pass the alert line within 72 h.`);
+      reasons.push(
+        `${spec.label} is trending ${badDirection[metric] === 'high' ? 'up' : 'down'} and may pass the alert line within 72 h.`,
+      );
     }
   }
 
   let state: Forecast['state'] = 'clear';
-  if (personal.some(a => a.severity === 'high') || personal.length >= 2) state = 'storm';
-  else if (personal.length > 0 || cabin.length > 0 || trending.length > 0) state = 'cloudy';
+  if (personal.some(a => a.severity === 'high') || personal.length >= 2)
+    state = 'storm';
+  else if (personal.length > 0 || cabin.length > 0 || trending.length > 0)
+    state = 'cloudy';
 
   let missing = 0;
-  for (let d = asOfDay - 6; d <= asOfDay; d++) if (d >= 0 && !index.has(d)) missing++;
+  for (let d = asOfDay - 6; d <= asOfDay; d++)
+    if (d >= 0 && !index.has(d)) missing++;
   const historyDays = [...index.keys()].filter(d => d <= asOfDay).length;
-  const lowConfidence = historyDays < t.learningDays || missing > t.maxMissingLast7;
-  if (lowConfidence) reasons.push('Low confidence: not enough recent data to trust the baseline.');
-  if (state === 'clear' && !lowConfidence) reasons.push('All metrics are close to this crew member\'s usual range.');
+  const lowConfidence =
+    historyDays < t.learningDays || missing > t.maxMissingLast7;
+  if (lowConfidence)
+    reasons.push(
+      'Low confidence: not enough recent data to trust the baseline.',
+    );
+  if (state === 'clear' && !lowConfidence)
+    reasons.push("All metrics are close to this crew member's usual range.");
 
   return {
     alerts,
