@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@somacast/core';
-import { fs } from '../../../shared/theme/typography';
+import { ff, fs } from '../../../shared/theme/typography';
 import type { LatestView } from '../model/todayModel';
 
 export function ReadingsGrid({ readings }: { readings: LatestView[] }) {
@@ -34,12 +34,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 12,
   },
-  label: { color: theme.textSecondary, fontSize: fs.small },
+  label: { ...ff.body, color: theme.textSecondary, fontSize: fs.small },
   value: {
+    ...ff.bodyBold,
     color: theme.text,
     fontSize: fs.card * 0.8,
-    fontWeight: '700',
     marginTop: 4,
   },
-  unit: { fontSize: fs.small, fontWeight: '400' },
+  unit: { ...ff.body, fontSize: fs.small },
 });

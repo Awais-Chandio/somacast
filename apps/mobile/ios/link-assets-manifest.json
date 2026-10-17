@@ -1,0 +1,37 @@
+{
+  "migIndex": 1,
+  "data": [
+    {
+      "path": "../../assets/fonts/FiraCode-Bold.ttf",
+      "sha1": "c69ffea0fc3ef8cba6c72e31ff9db8a36dc9c857"
+    },
+    {
+      "path": "../../assets/fonts/FiraCode-Regular.ttf",
+      "sha1": "80abed4c40b3a19ba2def87e7fd66fba9bb40c2f"
+    },
+    {
+      "path": "../../assets/fonts/FiraSans-Black.ttf",
+      "sha1": "d4f1f6397ae7e9ec9a079df6bf05164493216d2c"
+    },
+    {
+      "path": "../../assets/fonts/FiraSans-Bold.ttf",
+      "sha1": "bdb04cd9e835a3cf7ba22df0354f1472812df225"
+    },
+    {
+      "path": "../../assets/fonts/Overpass-Bold.ttf",
+      "sha1": "44e088b325efec70d875d9842abd560b8ef4f354"
+    },
+    {
+      "path": "../../assets/fonts/Overpass-Italic.ttf",
+      "sha1": "5cc094132676012da0347971510be1c867e4f636"
+    },
+    {
+      "path": "../../assets/fonts/Overpass-Regular.ttf",
+      "sha1": "d4a1bed4c947e9cf62fd5dcdb84adfa481ee15e0"
+    },
+    {
+      "path": "../../assets/fonts/Overpass-SemiBold.ttf",
+      "sha1": "d477d72e206dc9c02e9f752b9ac1f59e22194299"
+    }
+  ]
+}

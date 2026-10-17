@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@somacast/core';
-import { fs } from '../theme/typography';
+import { ff, fs } from '../theme/typography';
 
 // Required on every screen that shows vitals: all values are simulated.
 export function SimulatedBadge() {
@@ -25,9 +25,9 @@ const styles = StyleSheet.create({
     paddingVertical: 4,
   },
   text: {
+    ...ff.bodyBold,
     color: theme.accent,
     fontSize: fs.small * 0.85,
-    fontWeight: '700',
     letterSpacing: 1,
   },
 });

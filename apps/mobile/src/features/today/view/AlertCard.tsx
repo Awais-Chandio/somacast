@@ -1,7 +1,7 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { color, theme, type Alert } from '@somacast/core';
-import { fs } from '../../../shared/theme/typography';
+import { ff, fs } from '../../../shared/theme/typography';
 import type { AlertView } from '../model/todayModel';
 
 const severityColor: Record<Alert['severity'], string> = {
@@ -43,17 +43,22 @@ const styles = StyleSheet.create({
   },
   top: { flexDirection: 'row', justifyContent: 'space-between', gap: 8 },
   metric: {
+    ...ff.bodyBold,
     color: theme.text,
     fontSize: fs.body,
-    fontWeight: '700',
     flex: 1,
   },
-  severity: { color: theme.text, fontSize: fs.small, fontWeight: '700' },
+  severity: { ...ff.bodyBold, color: theme.text, fontSize: fs.small },
   value: {
+    ...ff.bodyBold,
     color: theme.text,
     fontSize: fs.card,
-    fontWeight: '700',
     marginTop: 4,
   },
-  detail: { color: theme.textSecondary, fontSize: fs.small, marginTop: 2 },
+  detail: {
+    ...ff.body,
+    color: theme.textSecondary,
+    fontSize: fs.small,
+    marginTop: 2,
+  },
 });

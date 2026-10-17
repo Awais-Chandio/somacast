@@ -12,6 +12,14 @@
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		761780EF2CA45674006654EF /* SceneDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EE2CA45674006654EF /* SceneDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
+		A2689F108FE8448B849D2446 /* Overpass-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 76D723A5815F438C9423E787 /* Overpass-SemiBold.ttf */; };
+		793BCF26BCBB44C591707DE5 /* Overpass-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 684B65295F1D4320A5C885E8 /* Overpass-Regular.ttf */; };
+		F4CA7416A5FE478DAC60FD1D /* Overpass-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D4C7E10D910F4F7482A117EC /* Overpass-Bold.ttf */; };
+		E94ED3B8D7354E93A78E0184 /* FiraCode-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = D76D4C2786E74055ABF0E4B9 /* FiraCode-Bold.ttf */; };
+		145B962478C54B8C86BA87E1 /* FiraCode-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 1BFCD3BF66C644CC8A6057A4 /* FiraCode-Regular.ttf */; };
+		B98B8ED68EC141DC913A528E /* FiraSans-Black.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 07DEBF2661484E0AA69D4EE6 /* FiraSans-Black.ttf */; };
+		B02E6F2530984D98ABB8692B /* Overpass-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = A31CAC4E978B4856B2C20F9C /* Overpass-Italic.ttf */; };
+		64154403F83941428F7DE938 /* FiraSans-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 76210249ABFF4570A3F1426E /* FiraSans-Bold.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -26,6 +34,14 @@
 		761780EE2CA45674006654EF /* SceneDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = SceneDelegate.swift; path = Somacast/SceneDelegate.swift; sourceTree = "<group>"; };
 		81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = LaunchScreen.storyboard; path = Somacast/LaunchScreen.storyboard; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
+		76D723A5815F438C9423E787 /* Overpass-SemiBold.ttf */ = {isa = PBXFileReference; name = "Overpass-SemiBold.ttf"; path = "../../../assets/fonts/Overpass-SemiBold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		684B65295F1D4320A5C885E8 /* Overpass-Regular.ttf */ = {isa = PBXFileReference; name = "Overpass-Regular.ttf"; path = "../../../assets/fonts/Overpass-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D4C7E10D910F4F7482A117EC /* Overpass-Bold.ttf */ = {isa = PBXFileReference; name = "Overpass-Bold.ttf"; path = "../../../assets/fonts/Overpass-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		D76D4C2786E74055ABF0E4B9 /* FiraCode-Bold.ttf */ = {isa = PBXFileReference; name = "FiraCode-Bold.ttf"; path = "../../../assets/fonts/FiraCode-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		1BFCD3BF66C644CC8A6057A4 /* FiraCode-Regular.ttf */ = {isa = PBXFileReference; name = "FiraCode-Regular.ttf"; path = "../../../assets/fonts/FiraCode-Regular.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		07DEBF2661484E0AA69D4EE6 /* FiraSans-Black.ttf */ = {isa = PBXFileReference; name = "FiraSans-Black.ttf"; path = "../../../assets/fonts/FiraSans-Black.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		A31CAC4E978B4856B2C20F9C /* Overpass-Italic.ttf */ = {isa = PBXFileReference; name = "Overpass-Italic.ttf"; path = "../../../assets/fonts/Overpass-Italic.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
+		76210249ABFF4570A3F1426E /* FiraSans-Bold.ttf */ = {isa = PBXFileReference; name = "FiraSans-Bold.ttf"; path = "../../../assets/fonts/FiraSans-Bold.ttf"; sourceTree = "<group>"; fileEncoding = undefined; lastKnownFileType = unknown; explicitFileType = undefined; includeInIndex = 0; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -77,6 +93,7 @@
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
 				BBD78D7AC51CEA395F1C20DB /* Pods */,
+				1460715B6F7A46C0B93DDFEB /* Resources */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -99,6 +116,22 @@
 			);
 			path = Pods;
 			sourceTree = "<group>";
+		};
+		1460715B6F7A46C0B93DDFEB /* Resources */ = {
+			isa = "PBXGroup";
+			children = (
+				76D723A5815F438C9423E787 /* Overpass-SemiBold.ttf */,
+				684B65295F1D4320A5C885E8 /* Overpass-Regular.ttf */,
+				D4C7E10D910F4F7482A117EC /* Overpass-Bold.ttf */,
+				D76D4C2786E74055ABF0E4B9 /* FiraCode-Bold.ttf */,
+				1BFCD3BF66C644CC8A6057A4 /* FiraCode-Regular.ttf */,
+				07DEBF2661484E0AA69D4EE6 /* FiraSans-Black.ttf */,
+				A31CAC4E978B4856B2C20F9C /* Overpass-Italic.ttf */,
+				76210249ABFF4570A3F1426E /* FiraSans-Bold.ttf */,
+			);
+			name = Resources;
+			sourceTree = "<group>";
+			path = "";
 		};
 /* End PBXGroup section */
 
@@ -162,6 +195,14 @@
 			files = (
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				A2689F108FE8448B849D2446 /* Overpass-SemiBold.ttf in Resources */,
+				793BCF26BCBB44C591707DE5 /* Overpass-Regular.ttf in Resources */,
+				F4CA7416A5FE478DAC60FD1D /* Overpass-Bold.ttf in Resources */,
+				E94ED3B8D7354E93A78E0184 /* FiraCode-Bold.ttf in Resources */,
+				145B962478C54B8C86BA87E1 /* FiraCode-Regular.ttf in Resources */,
+				B98B8ED68EC141DC913A528E /* FiraSans-Black.ttf in Resources */,
+				B02E6F2530984D98ABB8692B /* Overpass-Italic.ttf in Resources */,
+				64154403F83941428F7DE938 /* FiraSans-Bold.ttf in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

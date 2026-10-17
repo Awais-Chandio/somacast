@@ -1,7 +1,7 @@
 import React from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 import { size, theme } from '@somacast/core';
-import { fs } from '../theme/typography';
+import { ff, fs } from '../theme/typography';
 
 type Props = {
   label: string;
@@ -43,6 +43,6 @@ const styles = StyleSheet.create({
   },
   selected: { backgroundColor: theme.accent, borderColor: theme.accent },
   pressed: { opacity: 0.7 },
-  text: { color: theme.text, fontSize: fs.body, fontWeight: '600' },
-  textSelected: { color: theme.onAccent, fontWeight: '700' },
+  text: { ...ff.bodySemi, color: theme.text, fontSize: fs.body },
+  textSelected: { ...ff.bodyBold, color: theme.onAccent },
 });

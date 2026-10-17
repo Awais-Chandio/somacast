@@ -2,7 +2,7 @@ import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@somacast/core';
 import { StepButton } from '../../../shared/components';
-import { fs } from '../../../shared/theme/typography';
+import { ff, fs } from '../../../shared/theme/typography';
 
 type Props = {
   day: number;
@@ -39,9 +39,9 @@ export function DayStepper({ day, maxDay, onPrev, onNext }: Props) {
 const styles = StyleSheet.create({
   stepper: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   value: {
+    ...ff.bodyBold,
     color: theme.text,
     fontSize: fs.card * 0.8,
-    fontWeight: '700',
     minWidth: 96,
     textAlign: 'center',
   },

@@ -1,18 +1,16 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import { size, theme, weather, type Forecast } from '@somacast/core';
-import { fs, headingFont } from '../../../shared/theme/typography';
+import { size, theme, weather } from '@somacast/core';
+import { ICON_STROKE, weatherIcons } from '../../../shared/theme/icons';
+import { ff, fs } from '../../../shared/theme/typography';
 import type { TodayView } from '../model/todayModel';
 
-// Plain-text icons until an icon set is chosen. The word is always shown next to it.
-const weatherIcon: Record<Forecast['state'], string> = {
-  clear: '☀️',
-  cloudy: '☁️',
-  storm: '⛈️',
-};
+const ICON_SIZE = size.icon[2]; // 32
+const HOLDER_SIZE = size.icon[3]; // 48
 
 export function ForecastCard({ view }: { view: TodayView }) {
   const w = weather[view.state];
+  const Icon = weatherIcons[w.icon];
   const lowConfidence = view.confidence === 'low';
 
   return (
@@ -28,8 +26,11 @@ export function ForecastCard({ view }: { view: TodayView }) {
       </Text>
       <Text style={styles.meta}>NEXT 72 HOURS</Text>
       <View style={styles.row}>
-        <Text style={styles.icon}>{weatherIcon[view.state]}</Text>
-        <Text style={[styles.word, headingFont]}>{w.label}</Text>
+        {/* Deep Blue holder: the status colours fail contrast on Electric Blue (Rocket Red 2.08:1). */}
+        <View style={styles.iconHolder} testID={`weather-icon-${view.state}`}>
+          <Icon size={ICON_SIZE} color={w.color} strokeWidth={ICON_STROKE} />
+        </View>
+        <Text style={styles.word}>{w.label}</Text>
       </View>
       <View style={[styles.stateBar, { backgroundColor: w.color }]} />
       {lowConfidence && (
@@ -49,15 +50,27 @@ const styles = StyleSheet.create({
     borderLeftWidth: 8,
     padding: 16,
   },
-  meta: { color: theme.text, fontSize: fs.small, letterSpacing: 0.5 },
+  meta: {
+    ...ff.body,
+    color: theme.text,
+    fontSize: fs.small,
+    letterSpacing: 0.5,
+  },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     marginTop: 8,
   },
-  icon: { fontSize: size.icon[3] },
-  word: { color: theme.text, fontSize: size.h2 },
+  iconHolder: {
+    width: HOLDER_SIZE,
+    height: HOLDER_SIZE,
+    borderRadius: HOLDER_SIZE / 2,
+    backgroundColor: theme.bg,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  word: { ...ff.heading, color: theme.text, fontSize: size.h2 },
   stateBar: { height: 4, borderRadius: 2, marginTop: 12 },
   lowTag: {
     alignSelf: 'flex-start',
@@ -68,5 +81,5 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
-  lowTagText: { color: theme.accent, fontSize: fs.small, fontWeight: '700' },
+  lowTagText: { ...ff.bodyBold, color: theme.accent, fontSize: fs.small },
 });

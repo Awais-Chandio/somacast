@@ -3,7 +3,7 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '@somacast/core';
 import { Chip, SectionLabel } from '../../../shared/components';
-import { fs } from '../../../shared/theme/typography';
+import { ff, fs } from '../../../shared/theme/typography';
 import { useTodayController } from '../controller/useTodayController';
 import { AlertCard } from './AlertCard';
 import { DayStepper } from './DayStepper';
@@ -89,13 +89,15 @@ const styles = StyleSheet.create({
   content: { padding: 16, paddingBottom: 48 },
   row: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   reason: {
+    ...ff.body,
     color: theme.text,
     fontSize: fs.body,
     lineHeight: fs.body * 1.5,
     marginBottom: 4,
   },
-  muted: { color: theme.textSecondary, fontSize: fs.body },
+  muted: { ...ff.body, color: theme.textSecondary, fontSize: fs.body },
   footer: {
+    ...ff.body,
     color: theme.textSecondary,
     fontSize: fs.small,
     lineHeight: fs.small * 1.5,

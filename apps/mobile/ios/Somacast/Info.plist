@@ -74,5 +74,16 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>UIAppFonts</key>
+	<array>
+		<string>Overpass-SemiBold.ttf</string>
+		<string>Overpass-Regular.ttf</string>
+		<string>Overpass-Bold.ttf</string>
+		<string>FiraCode-Bold.ttf</string>
+		<string>FiraCode-Regular.ttf</string>
+		<string>FiraSans-Black.ttf</string>
+		<string>Overpass-Italic.ttf</string>
+		<string>FiraSans-Bold.ttf</string>
+	</array>
 </dict>
 </plist>
