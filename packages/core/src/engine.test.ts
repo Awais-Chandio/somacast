@@ -138,6 +138,19 @@ describe('72 h forecast', () => {
     }
   });
 
+  it('blackout: C2 is Storm at the end of the decline (day 75) in at least 45 of 50 seeds', () => {
+    let storm = 0;
+    for (let seed = 1; seed <= 50; seed++) {
+      const { readings } = simulate({
+        ...base,
+        seed,
+        scenario: scenarios.blackoutDecline,
+      });
+      if (assess(readings, 'C2', 75).forecast.state === 'storm') storm++;
+    }
+    expect(storm).toBeGreaterThanOrEqual(45);
+  });
+
   it('shared cabin CO2 problem makes healthy crew Cloudy, not Storm', () => {
     const { readings } = simulate({
       ...base,

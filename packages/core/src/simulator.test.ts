@@ -150,7 +150,7 @@ describe('schemas and scenarios', () => {
   it('ramp grows linearly and reaches full delta on the last day', () => {
     const effects = scenarios.blackoutDecline.effects;
     expect(effectDelta(effects, 'sleepHours', 'C2', 44)).toBe(0);
-    expect(effectDelta(effects, 'sleepHours', 'C2', 75)).toBeCloseTo(-1.5, 5);
+    expect(effectDelta(effects, 'sleepHours', 'C2', 75)).toBeCloseTo(-2, 5);
     expect(effectDelta(effects, 'sleepHours', 'C1', 75)).toBe(0);
   });
 });

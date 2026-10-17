@@ -9,7 +9,7 @@
       "startDay": 45,
       "endDay": 75,
       "kind": "ramp",
-      "delta": -1.5
+      "delta": -2
     },
     {
       "metric": "restingHr",
@@ -17,7 +17,7 @@
       "startDay": 45,
       "endDay": 75,
       "kind": "ramp",
-      "delta": 6
+      "delta": 8
     },
     {
       "metric": "hrv",
@@ -25,7 +25,7 @@
       "startDay": 45,
       "endDay": 75,
       "kind": "ramp",
-      "delta": -10
+      "delta": -14
     },
     {
       "metric": "psychCheckin",
