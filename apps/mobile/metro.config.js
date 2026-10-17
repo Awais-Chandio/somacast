@@ -9,6 +9,10 @@ const { getDefaultConfig, mergeConfig } = require('@react-native/metro-config');
  */
 const config = {
   watchFolders: [path.resolve(__dirname, '../../packages/core')],
+  resolver: {
+    // @somacast/core lives outside this app; Babel helpers it needs are found here.
+    nodeModulesPaths: [path.resolve(__dirname, 'node_modules')],
+  },
 };
 
 module.exports = mergeConfig(getDefaultConfig(__dirname), config);
