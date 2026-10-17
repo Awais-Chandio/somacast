@@ -1,4 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { enqueue, type OutboxStore } from '@somacast/core';
 import {
   DEFAULT_CREW_ID,
   MISSION,
@@ -6,13 +7,15 @@ import {
   type ScenarioKey,
 } from '../../../config/mission';
 import { simulateMission } from '../../../shared/model/simulateMission';
+import { blackBoxEntries } from '../../../sync/blackBox';
 import { buildTodayView } from '../model/todayModel';
 
 const MAX_DAY = MISSION.days - 1;
 
 // Controller: owns the Today screen's state and user actions.
 // No layout here (that is the view) and no health logic (that is the model / @somacast/core).
-export function useTodayController() {
+// Every day the screen shows is also written to the black-box outbox; onLogged lets the link panel recount.
+export function useTodayController(outbox: OutboxStore, onLogged?: () => void) {
   const [scenario, setScenario] = useState<ScenarioKey>('normal');
   const [crewId, setCrewId] = useState(DEFAULT_CREW_ID);
   const [day, setDay] = useState(MAX_DAY);
@@ -22,6 +25,15 @@ export function useTodayController() {
     () => buildTodayView(sim, crewId, day),
     [sim, crewId, day],
   );
+  const logEntries = useMemo(
+    () => blackBoxEntries(sim, scenario, crewId, day),
+    [sim, scenario, crewId, day],
+  );
+
+  useEffect(() => {
+    for (const e of logEntries) enqueue(outbox, e); // same day again = same keys = no-op
+    onLogged?.();
+  }, [outbox, logEntries, onLogged]);
 
   const prevDay = useCallback(() => setDay(d => Math.max(0, d - 1)), []);
   const nextDay = useCallback(() => setDay(d => Math.min(MAX_DAY, d + 1)), []);

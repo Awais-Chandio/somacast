@@ -1,12 +1,13 @@
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
+import { MemoryOutboxStore } from '@somacast/core';
 import { useTodayController, type TodayController } from './useTodayController';
 
 // Renders the hook inside a tiny component and keeps the latest result.
-async function renderController() {
+async function renderController(outbox = new MemoryOutboxStore()) {
   const ref: { current: TodayController | null } = { current: null };
   function Probe() {
-    ref.current = useTodayController();
+    ref.current = useTodayController(outbox);
     return null;
   }
   await ReactTestRenderer.act(() => {
@@ -44,5 +45,21 @@ describe('useTodayController', () => {
     }
     expect(c().view.crewName).toBe('Kenji');
     expect(c().view.state).toBe('storm');
+  });
+
+  it('black box: each shown day is logged once, revisiting adds nothing', async () => {
+    const outbox = new MemoryOutboxStore();
+    const c = await renderController(outbox);
+    const first = outbox.pendingCount();
+    expect(first).toBeGreaterThanOrEqual(1); // at least the day's reading
+    expect(outbox.has(`C1:reading:normal-C1-${c().maxDay}-reading`)).toBe(true);
+
+    await act(() => c().prevDay());
+    const afterNewDay = outbox.pendingCount();
+    expect(afterNewDay).toBeGreaterThan(first);
+
+    await act(() => c().nextDay()); // back to a day already logged
+    await act(() => c().prevDay());
+    expect(outbox.pendingCount()).toBe(afterNewDay);
   });
 });

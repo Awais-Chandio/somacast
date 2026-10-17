@@ -3,6 +3,9 @@ import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '@somacast/core';
 import { Chip, SectionLabel } from '../../../shared/components';
+import { getDeviceOutbox } from '../../../sync/SqliteOutboxStore';
+import { useLinkPanel } from '../../link/controller/useLinkPanel';
+import { LinkPanel } from '../../link/view/LinkPanel';
 import { ff, fs } from '../../../shared/theme/typography';
 import { useTodayController } from '../controller/useTodayController';
 import { AlertCard } from './AlertCard';
@@ -13,12 +16,15 @@ import { TodayHeader } from './TodayHeader';
 
 // View: lays out what the controller hands it. No state logic, no health logic.
 export function TodayScreen() {
-  const c = useTodayController();
+  const outbox = getDeviceOutbox();
+  const link = useLinkPanel(outbox);
+  const c = useTodayController(outbox, link.refresh);
   const { view } = c;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <TodayHeader />
+      <LinkPanel link={link} crewId={c.crewId} />
 
       <ScrollView contentContainerStyle={styles.content}>
         <SectionLabel>CREW MEMBER</SectionLabel>
