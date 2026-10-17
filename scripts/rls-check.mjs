@@ -1,16 +1,17 @@
 #!/usr/bin/env node
 // RLS proof for the Somacast ground database (Phase 7).
-// Uses only the public anon key, exactly like the phone. Signs in as the two demo users from
+// Uses only the public anon key, exactly like the phone. Signs in as the three demo users from
 // supabase/seed-users.md and checks what each one can and cannot do. Prints a PASS/FAIL table and
 // exits 1 if anything fails.
 //
 //   npm run rls-check
 //
 // Reads SUPABASE_URL / SUPABASE_ANON_KEY from apps/mobile/.env and the demo passwords from
-// scripts/.env (MAYA_PASSWORD, DANIEL_PASSWORD). Never uses the service-role key.
+// scripts/.env (MAYA_PASSWORD, DANIEL_PASSWORD, PROBE_PASSWORD). Never uses the service-role key.
 //
-// Writes it makes on purpose: at most one C1 probe row (only if Maya's crew has no rows yet, stable
-// key, so never more than one) and one uplink note per run, labelled as an RLS probe.
+// Every write it makes or attempts targets the test crew ZZ-TEST (the probe account), never a real
+// crew: at most one ZZ-TEST log row ever (stable key, insert-if-missing) and one ZZ-TEST uplink note
+// per run, labelled as an RLS probe. The ground console hides every crew whose id starts with ZZ-.
 
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -23,26 +24,29 @@ for (const f of ['apps/mobile/.env', 'scripts/.env']) {
   if (existsSync(p)) process.loadEnvFile(p);
 }
 
-const { SUPABASE_URL, SUPABASE_ANON_KEY, MAYA_PASSWORD, DANIEL_PASSWORD } =
+const { SUPABASE_URL, SUPABASE_ANON_KEY, MAYA_PASSWORD, DANIEL_PASSWORD, PROBE_PASSWORD } =
   process.env;
 const missing = Object.entries({
   SUPABASE_URL,
   SUPABASE_ANON_KEY,
   MAYA_PASSWORD,
   DANIEL_PASSWORD,
+  PROBE_PASSWORD,
 })
   .filter(([, v]) => !v)
   .map(([k]) => k);
 if (missing.length) {
   console.error(
-    `Missing ${missing.join(', ')}. See apps/mobile/.env.example and scripts/.env.example.`,
+    `Missing ${missing.join(', ')}. See apps/mobile/.env.example, scripts/.env.example and supabase/seed-users.md.`,
   );
   process.exit(2);
 }
 
 const MAYA = { email: 'maya@somacast.test', password: MAYA_PASSWORD };
 const DANIEL = { email: 'daniel@somacast.test', password: DANIEL_PASSWORD };
-const PROBE_KEY = 'C1:crew_action:rls-check-probe';
+const PROBE = { email: 'probe@somacast.test', password: PROBE_PASSWORD };
+const TEST_CREW = 'ZZ-TEST';
+const PROBE_KEY = `${TEST_CREW}:crew_action:rls-check-probe`;
 
 // A fresh client per user: no shared session, nothing saved to disk.
 const newClient = () =>
@@ -93,85 +97,84 @@ async function check(who, name, fn) {
 // ---------------------------------------------------------------------------
 const maya = await signIn(MAYA);
 const daniel = await signIn(DANIEL);
+const probe = await signIn(PROBE);
 const anon = newClient();
 
-// Daniel (surgeon) sees every crew, so he tells us whether a C2 row really exists.
-const c2Exists = await countRows(daniel.c, 'C2');
-
-// Maya's own-crew row to aim update/delete at: any existing C1 row, else the probe row.
+// Probe = a crew member of ZZ-TEST. It writes the only log row this script ever stores.
 let target = null;
-await check('Maya', 'insert own crew (C1) row', async () => {
-  const { data, error } = await maya.c
-    .from('log_entries')
-    .select('key, kind')
-    .eq('crew_id', 'C1')
-    .limit(1);
+await check('Probe', 'insert own crew (ZZ-TEST) row', async () => {
+  const { data, error } = await probe.c.from('log_entries').select('key, kind').eq('key', PROBE_KEY);
   if (error) throw new Error(error.message);
   if (data.length) {
     target = data[0];
-    return { pass: true, detail: `C1 already has rows (by app sync); using ${target.key}` };
+    return { pass: true, detail: `${PROBE_KEY} already stored (earlier run)` };
   }
-  const r = await maya.c.from('log_entries').insert(row(PROBE_KEY, 'C1'));
+  const r = await probe.c.from('log_entries').insert(row(PROBE_KEY, TEST_CREW));
   if (r.error) return { pass: false, detail: r.error.message };
   target = { key: PROBE_KEY, kind: 'crew_action' };
   return { pass: true, detail: `inserted ${PROBE_KEY}` };
 });
 
-await check('Maya', 'insert C2 row is refused', async () => {
-  const r = await maya.c
-    .from('log_entries')
-    .insert(row(`C2:crew_action:rls-forged-${Date.now()}`, 'C2'));
-  return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
-});
-
-await check('Maya', 'upsert onto a C2 key is refused', async () => {
-  const r = await maya.c
-    .from('log_entries')
-    .upsert(row('C2:reading:rls-fixture', 'C2'), { onConflict: 'key', ignoreDuplicates: true });
-  return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
-});
-
-await check('Maya', 'read C2 rows returns 0', async () => {
-  const n = await countRows(maya.c, 'C2');
-  return {
-    pass: n === 0,
-    detail: `Maya sees ${n}; Daniel sees ${c2Exists} C2 row(s)${c2Exists ? '' : ' (add the C2 fixture for a stronger proof)'}`,
-  };
-});
-
-await check('Maya', 'update own row is refused', async () => {
-  const r = await maya.c
+await check('Probe', 'update own row is refused', async () => {
+  const r = await probe.c
     .from('log_entries')
     .update({ kind: 'tampered' })
     .eq('key', target.key)
     .select('key');
-  const after = await maya.c.from('log_entries').select('kind').eq('key', target.key).single();
+  const after = await probe.c.from('log_entries').select('kind').eq('key', target.key).single();
   const unchanged = after.data?.kind === target.kind;
   return { pass: blocked(r) && unchanged, detail: `${why(r)}; row ${unchanged ? 'unchanged' : 'CHANGED'}` };
 });
 
-await check('Maya', 'delete own row is refused', async () => {
-  const r = await maya.c.from('log_entries').delete().eq('key', target.key).select('key');
-  const after = await maya.c.from('log_entries').select('key').eq('key', target.key);
+await check('Probe', 'delete own row is refused', async () => {
+  const r = await probe.c.from('log_entries').delete().eq('key', target.key).select('key');
+  const after = await probe.c.from('log_entries').select('key').eq('key', target.key);
   const still = after.data?.length === 1;
   return { pass: blocked(r) && still, detail: `${why(r)}; row ${still ? 'still there' : 'GONE'}` };
 });
 
-await check('Maya', 'resending a stored key adds no row', async () => {
-  const before = await countRows(maya.c, 'C1');
-  const { data: full } = await maya.c
+await check('Probe', 'resending a stored key adds no row', async () => {
+  const before = await countRows(probe.c, TEST_CREW);
+  const { data: full } = await probe.c
     .from('log_entries')
     .select('key, crew_id, kind, ts, payload')
     .eq('key', target.key)
     .single();
-  const r = await maya.c
+  const r = await probe.c
     .from('log_entries')
     .upsert(full, { onConflict: 'key', ignoreDuplicates: true });
-  const after = await countRows(maya.c, 'C1');
+  const after = await countRows(probe.c, TEST_CREW);
   return {
     pass: !r.error && after === before,
-    detail: r.error ? r.error.message : `C1 rows ${before} -> ${after}`,
+    detail: r.error ? r.error.message : `${TEST_CREW} rows ${before} -> ${after}`,
   };
+});
+
+await check('Probe', 'insert uplink note is refused', async () => {
+  const r = await probe.c.from('uplink_notes').insert({ crew_id: TEST_CREW, text: 'forged note' });
+  return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
+});
+
+// Maya = a crew member of C1. Her probes aim at ZZ-TEST and must all be refused or read nothing.
+const testRows = await countRows(daniel.c, TEST_CREW); // the surgeon sees every crew
+
+await check('Maya', 'insert ZZ-TEST row is refused', async () => {
+  const r = await maya.c
+    .from('log_entries')
+    .insert(row(`${TEST_CREW}:crew_action:rls-forged-${Date.now()}`, TEST_CREW));
+  return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
+});
+
+await check('Maya', 'upsert onto the ZZ-TEST probe key is refused', async () => {
+  const r = await maya.c
+    .from('log_entries')
+    .upsert(row(PROBE_KEY, TEST_CREW), { onConflict: 'key', ignoreDuplicates: true });
+  return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
+});
+
+await check('Maya', 'read ZZ-TEST rows returns 0', async () => {
+  const n = await countRows(maya.c, TEST_CREW);
+  return { pass: n === 0 && testRows > 0, detail: `Maya sees ${n}; Daniel sees ${testRows} ZZ-TEST row(s)` };
 });
 
 await check('Maya', 'profiles shows only her own row', async () => {
@@ -181,29 +184,29 @@ await check('Maya', 'profiles shows only her own row', async () => {
   return { pass: ok, detail: `${data.length} row(s): ${data.map(p => `${p.role}/${p.crew_id}`).join(', ')}` };
 });
 
-await check('Maya', 'insert uplink note is refused', async () => {
-  const r = await maya.c.from('uplink_notes').insert({ crew_id: 'C1', text: 'forged note' });
+await check('Maya', 'insert ZZ-TEST uplink note is refused', async () => {
+  const r = await maya.c.from('uplink_notes').insert({ crew_id: TEST_CREW, text: 'forged note' });
   return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
 });
 
 // ---------------------------------------------------------------------------
-await check('Daniel', 'reads C1 rows', async () => {
-  const n = await countRows(daniel.c, 'C1');
-  return { pass: n > 0, detail: `${n} C1 row(s)` };
+await check('Daniel', 'reads ZZ-TEST rows', async () => {
+  const n = await countRows(daniel.c, TEST_CREW);
+  return { pass: n > 0, detail: `${n} ZZ-TEST row(s)` };
 });
 
 await check('Daniel', 'insert log row is refused (read only)', async () => {
   const r = await daniel.c
     .from('log_entries')
-    .insert(row(`C1:crew_action:rls-surgeon-${Date.now()}`, 'C1'));
+    .insert(row(`${TEST_CREW}:crew_action:rls-surgeon-${Date.now()}`, TEST_CREW));
   return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
 });
 
 let noteId = null;
-await check('Daniel', 'insert uplink note for C1', async () => {
+await check('Daniel', 'insert uplink note for ZZ-TEST', async () => {
   const { data, error } = await daniel.c
     .from('uplink_notes')
-    .insert({ crew_id: 'C1', author: daniel.user.id, text: 'RLS check probe (not a medical note)' })
+    .insert({ crew_id: TEST_CREW, author: daniel.user.id, text: 'RLS check probe (not a medical note)' })
     .select('id')
     .single();
   if (error) return { pass: false, detail: error.message };
@@ -214,18 +217,18 @@ await check('Daniel', 'insert uplink note for C1', async () => {
 await check('Daniel', 'note signed as someone else is refused', async () => {
   const r = await daniel.c
     .from('uplink_notes')
-    .insert({ crew_id: 'C1', author: maya.user.id, text: 'forged author' });
+    .insert({ crew_id: TEST_CREW, author: probe.user.id, text: 'forged author' });
   return { pass: Boolean(r.error), detail: r.error ? `refused: ${r.error.message}` : 'ACCEPTED' };
 });
 
-await check('Maya', 'reads the uplink note for her crew', async () => {
-  const { data, error } = await maya.c.from('uplink_notes').select('id, crew_id').eq('id', noteId);
+await check('Probe', 'reads the uplink note for its crew', async () => {
+  const { data, error } = await probe.c.from('uplink_notes').select('id, crew_id').eq('id', noteId);
   if (error) throw new Error(error.message);
   return { pass: data.length === 1, detail: `${data.length} row(s)` };
 });
 
-await check('Maya', 'reads no uplink notes for C2', async () => {
-  const { data, error } = await maya.c.from('uplink_notes').select('id').eq('crew_id', 'C2');
+await check('Maya', 'reads no ZZ-TEST uplink notes', async () => {
+  const { data, error } = await maya.c.from('uplink_notes').select('id').eq('crew_id', TEST_CREW);
   if (error) throw new Error(error.message);
   return { pass: data.length === 0, detail: `${data.length} row(s)` };
 });
@@ -238,6 +241,7 @@ await check('anon', 'logged-out read of log_entries gets nothing', async () => {
 
 await maya.c.auth.signOut();
 await daniel.c.auth.signOut();
+await probe.c.auth.signOut();
 
 // ---------------------------------------------------------------------------
 const w = k => Math.max(k.length, ...results.map(r => String(r[k]).length));

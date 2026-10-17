@@ -7,6 +7,7 @@ import {
   signInWithPassword,
   type Account,
 } from '../model/account';
+import { forgetGroundChoice } from '../../link/model/groundChoice';
 
 export type AuthState =
   | { phase: 'loading' } // reading a saved session
@@ -74,6 +75,7 @@ export function useAuth(client: SupabaseClient | null) {
       setState({ phase: 'signedOut', error: null, busy: true });
       try {
         const account = await signInWithPassword(client, email, password);
+        forgetGroundChoice(account.userId); // a fresh sign-in always starts on Supabase
         setState({ phase: 'signedIn', account });
       } catch (e) {
         setState({ phase: 'signedOut', error: errorText(e), busy: false });

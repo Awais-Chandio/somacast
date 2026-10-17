@@ -2,6 +2,10 @@ import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { useAuth, type AuthController } from './useAuth';
+import {
+  groundChoiceFor,
+  rememberGroundChoice,
+} from '../../link/model/groundChoice';
 
 // A fake supabase-js client: one demo user, a profiles table, and an auth event hook.
 function fakeClient(opts: { session?: boolean; profile?: object | null } = {}) {
@@ -111,5 +115,13 @@ describe('useAuth', () => {
       phase: 'signedOut',
       error: 'No profile for this account yet. See supabase/seed-users.md.',
     });
+  });
+
+  it('signing in resets that account to the Supabase ground', async () => {
+    rememberGroundChoice('u-maya', 'demo'); // picked Demo in an earlier session
+    const a = await renderAuth(fakeClient().client);
+    await act(() => a().signIn('maya@somacast.test', 'right'));
+    expect(a().state).toMatchObject({ phase: 'signedIn' });
+    expect(groundChoiceFor('u-maya')).toBe('supabase');
   });
 });

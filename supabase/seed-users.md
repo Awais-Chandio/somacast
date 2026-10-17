@@ -1,12 +1,17 @@
-# Seed the two demo users
+# Seed the demo users
 
-Somacast needs two demo accounts on the Supabase project `somacast`. Both are demo identities on the
+Somacast needs three demo accounts on the Supabase project `somacast`. Both are demo identities on the
 reserved `.test` domain; no real person or real health data is involved.
 
 | Email | Role | Crew | Display name |
 |---|---|---|---|
 | maya@somacast.test | `crew` | `C1` | Maya |
 | daniel@somacast.test | `surgeon` | (none, sees all crews) | Daniel |
+| probe@somacast.test | `crew` | `ZZ-TEST` | RLS probe |
+
+`probe@somacast.test` belongs to the test crew `ZZ-TEST`. Only `scripts/rls-check.mjs` uses it, and every
+write the check makes goes to `ZZ-TEST`, never to a real crew. The ground console hides crews starting
+with `ZZ-`.
 
 Run the migration first (`npx supabase db push`), so the `profiles` table exists.
 
@@ -16,8 +21,8 @@ Run the migration first (`npx supabase db push`), so the `profiles` table exists
 2. Click **Add user → Create new user**.
 3. Email `maya@somacast.test`, choose a password, and tick **Auto Confirm User** (the `.test` domain
    cannot receive a confirmation email).
-4. Repeat for `daniel@somacast.test`.
-5. Put both passwords in `scripts/.env` (copy `scripts/.env.example`). That file is git-ignored and is
+4. Repeat for `daniel@somacast.test` and `probe@somacast.test`.
+5. Put the three passwords in `scripts/.env` (copy `scripts/.env.example`). That file is git-ignored and is
    read only by `scripts/rls-check.mjs`. The app never stores them; you type them on the sign-in screen.
 
 ## 2. Give them roles
@@ -38,21 +43,35 @@ from auth.users where email = 'daniel@somacast.test'
 on conflict (user_id) do update
   set role = excluded.role, crew_id = excluded.crew_id, display_name = excluded.display_name;
 
--- Check: expect two rows.
+insert into public.profiles (user_id, role, crew_id, display_name)
+select id, 'crew', 'ZZ-TEST', 'RLS probe'
+from auth.users where email = 'probe@somacast.test'
+on conflict (user_id) do update
+  set role = excluded.role, crew_id = excluded.crew_id, display_name = excluded.display_name;
+
+-- Check: expect three rows.
 select u.email, p.role, p.crew_id, p.display_name
 from public.profiles p join auth.users u on u.id = p.user_id
 order by u.email;
 ```
 
-## 3. Optional: a C2 row for the RLS check
+## 3. Clean up probes from before ZZ-TEST (one time)
 
-`scripts/rls-check.mjs` proves that Maya reads 0 rows of crew `C2`. That proof is stronger when a C2 row
-actually exists. Insert one as the project owner (the owner bypasses RLS; Maya cannot do this):
+Earlier versions of `rls-check` wrote an uplink note to crew `C1` and used a `C2` fixture row. Neither
+is needed now. Run once as the project owner:
 
 ```sql
-insert into public.log_entries (key, crew_id, kind, ts, payload)
-values ('C2:reading:rls-fixture', 'C2', 'reading', now(), '{"simulated": true, "fixture": "rls-check"}')
-on conflict (key) do nothing;
+-- The old probe note that Maya's phone would show.
+delete from public.uplink_notes
+where crew_id <> 'ZZ-TEST' and text = 'RLS check probe (not a medical note)';
+
+-- The old C2 fixture. log_entries is append-only, so the owner lifts the guard for this one
+-- statement inside a transaction and puts it straight back.
+begin;
+alter table public.log_entries disable trigger log_entries_append_only;
+delete from public.log_entries where key = 'C2:reading:rls-fixture';
+alter table public.log_entries enable trigger log_entries_append_only;
+commit;
 ```
 
 ## Resetting the demo ground
@@ -64,5 +83,5 @@ can do):
 
 ```sql
 truncate public.log_entries;
--- then re-run the optional C2 fixture above
+-- the next npm run rls-check stores the ZZ-TEST probe row again
 ```

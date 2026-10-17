@@ -6,21 +6,38 @@ import {
   type LinkPanelController,
   type RemoteGround,
 } from './useLinkPanel';
+import { forgetGroundChoice } from '../model/groundChoice';
 
 async function renderPanel(
   store = new MemoryOutboxStore(),
   remote: RemoteGround | null = null,
+  accountId: string | null = null,
 ) {
   const ref: { current: LinkPanelController | null } = { current: null };
   const random = createRng(11).next; // seeded link faults: same run every time
-  function Probe() {
-    ref.current = useLinkPanel(store, { random, remote });
+  function Probe(props: { remote: RemoteGround | null }) {
+    ref.current = useLinkPanel(store, {
+      random,
+      remote: props.remote,
+      accountId,
+    });
     return null;
   }
+  let renderer: ReactTestRenderer.ReactTestRenderer | undefined;
   await ReactTestRenderer.act(() => {
-    ReactTestRenderer.create(<Probe />);
+    renderer = ReactTestRenderer.create(<Probe remote={remote} />);
   });
-  return () => ref.current as LinkPanelController;
+  const get = () => ref.current as LinkPanelController;
+  // Re-render with a different remote (e.g. the Supabase client arrives after the first render).
+  get.setRemote = (r: RemoteGround | null) =>
+    ReactTestRenderer.act(() => {
+      renderer?.update(<Probe remote={r} />);
+    });
+  get.unmount = () =>
+    ReactTestRenderer.act(() => {
+      renderer?.unmount();
+    });
+  return get;
 }
 
 const act = (fn: () => Promise<void>) => ReactTestRenderer.act(fn);
@@ -162,5 +179,58 @@ describe('useLinkPanel', () => {
     await act(() => p().toggleLink());
     expect(p().groundRows()).toBe(5000);
     expect(rows.size).toBe(0);
+  });
+
+  describe('ground choice per account', () => {
+    beforeEach(() => {
+      forgetGroundChoice('maya');
+      forgetGroundChoice('kenji');
+    });
+
+    it('signed in always starts on Supabase, even if the remote arrives late', async () => {
+      const { remote } = fakeRemote();
+      const p = await renderPanel(new MemoryOutboxStore(), null, 'maya');
+      expect(p().ground).toBe('demo'); // no remote yet: offline demo only
+      await p.setRemote(remote);
+      expect(p().ground).toBe('supabase');
+      expect(p().hasRemote).toBe(true);
+    });
+
+    it("one account's Demo choice is kept for it and never leaks to another", async () => {
+      const { remote } = fakeRemote();
+      const maya = await renderPanel(new MemoryOutboxStore(), remote, 'maya');
+      await act(async () => maya().selectGround('demo'));
+      expect(maya().ground).toBe('demo');
+      await maya.unmount();
+
+      const kenji = await renderPanel(new MemoryOutboxStore(), remote, 'kenji');
+      expect(kenji().ground).toBe('supabase');
+
+      const mayaAgain = await renderPanel(
+        new MemoryOutboxStore(),
+        remote,
+        'maya',
+      );
+      expect(mayaAgain().ground).toBe('demo'); // same session, same account
+    });
+
+    it('a fresh sign-in (forgetGroundChoice) starts on Supabase again', async () => {
+      const { remote } = fakeRemote();
+      const p = await renderPanel(new MemoryOutboxStore(), remote, 'maya');
+      await act(async () => p().selectGround('demo'));
+      await p.unmount();
+      forgetGroundChoice('maya'); // what useAuth.signIn does
+      const again = await renderPanel(new MemoryOutboxStore(), remote, 'maya');
+      expect(again().ground).toBe('supabase');
+    });
+
+    it('losing the remote falls back to Demo, getting it back restores Supabase', async () => {
+      const { remote } = fakeRemote();
+      const p = await renderPanel(new MemoryOutboxStore(), remote, 'maya');
+      await p.setRemote(null);
+      expect(p().ground).toBe('demo');
+      await p.setRemote(remote);
+      expect(p().ground).toBe('supabase');
+    });
   });
 });

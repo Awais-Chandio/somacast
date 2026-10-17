@@ -13,12 +13,17 @@ import {
   type LocalOutbox,
   type SyncStatus,
 } from '../model/linkPanel';
+import {
+  groundChoiceFor,
+  rememberGroundChoice,
+  type GroundMode,
+} from '../model/groundChoice';
 
 // Demo radio link: 10% of batches lost on the way up, 10% of acknowledgements lost on the way down.
 const LINK_FAULTS = { failRate: 0.1, lostAckRate: 0.1 };
 
 // Where synced entries go: the real Supabase ground, or the in-memory demo ground (offline demo).
-export type GroundMode = 'supabase' | 'demo';
+export type { GroundMode };
 
 // The real ground, built by the screen from a signed-in Supabase client (see SupabaseTransport).
 export type RemoteGround = {
@@ -28,9 +33,14 @@ export type RemoteGround = {
 
 // Controller: link state, outbox count, ground choice and sync progress. The sending logic lives in
 // the model. Without `remote` (offline, not signed in) only the demo ground is available.
+// Signed in, the ground is Supabase unless this account (accountId) switched to Demo itself.
 export function useLinkPanel(
   store: LocalOutbox,
-  opts: { random?: () => number; remote?: RemoteGround | null } = {},
+  opts: {
+    random?: () => number;
+    remote?: RemoteGround | null;
+    accountId?: string | null;
+  } = {},
 ) {
   const [link, setLink] = useState<Link>('LOS'); // the app always starts in LOS
   const linkRef = useRef<Link>('LOS');
@@ -42,11 +52,17 @@ export function useLinkPanel(
   const ground = useRef(new MockGroundStore());
   // Bumped by a reset so the Today screen logs the day it is showing again.
   const [resetEpoch, setResetEpoch] = useState(0);
-  const { random, remote } = opts;
-  const [groundMode, setGroundMode] = useState<GroundMode>(
-    remote ? 'supabase' : 'demo',
-  );
+  const { random, remote, accountId } = opts;
+  // Session-only choice for an account without an id (tests, older callers).
+  const [localChoice, setLocalChoice] = useState<GroundMode>('supabase');
+  // Derived on every render, so a remote that arrives after the first render still means Supabase.
+  const groundMode: GroundMode = !remote
+    ? 'demo'
+    : accountId
+    ? groundChoiceFor(accountId)
+    : localChoice;
   const groundRef = useRef<GroundMode>(groundMode);
+  groundRef.current = groundMode;
 
   const refresh = useCallback(() => setOutbox(outboxBreakdown(store)), [store]);
 
@@ -110,12 +126,13 @@ export function useLinkPanel(
     (mode: GroundMode) => {
       if (linkRef.current !== 'LOS' || fillingRef.current || syncing.current)
         return;
-      if (mode === 'supabase' && !remote) return;
+      if (!remote) return; // offline: Demo is the only ground
+      if (accountId) rememberGroundChoice(accountId, mode);
       groundRef.current = mode;
-      setGroundMode(mode);
+      setLocalChoice(mode); // also re-renders when the choice lives in the account store
       setStatus({ phase: 'idle' });
     },
-    [remote],
+    [remote, accountId],
   );
 
   // Demo only, LOS only: empties the outbox and the demo ground so the demo can run again.

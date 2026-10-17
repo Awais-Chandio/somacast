@@ -45,7 +45,10 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
         : null,
     [client, crewId],
   );
-  const link = useLinkPanel(outbox, { remote });
+  const link = useLinkPanel(outbox, {
+    remote,
+    accountId: account?.userId ?? null,
+  });
   const c = useTodayController(outbox, link.refresh, link.resetEpoch, crewId);
   const { view } = c;
 
