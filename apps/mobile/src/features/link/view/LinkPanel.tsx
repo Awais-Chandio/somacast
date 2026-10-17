@@ -8,6 +8,7 @@ import {
   RefreshCw,
 } from 'lucide-react-native';
 import { color, size, theme } from '@somacast/core';
+import { Chip } from '../../../shared/components';
 import { ICON_STROKE } from '../../../shared/theme/icons';
 import { ff, fs } from '../../../shared/theme/typography';
 import type { LinkPanelController } from '../controller/useLinkPanel';
@@ -35,7 +36,8 @@ export function LinkPanel({ link, crewId }: Props) {
   const BannerIcon =
     link.status.phase === 'synced'
       ? Check
-      : link.status.phase === 'interrupted'
+      : link.status.phase === 'interrupted' ||
+        link.status.phase === 'unverified'
       ? AlertTriangle
       : RefreshCw;
 
@@ -59,6 +61,28 @@ export function LinkPanel({ link, crewId }: Props) {
         <Text style={styles.count} accessibilityLiveRegion="polite">
           {outboxText(link.outbox)}
         </Text>
+      </View>
+
+      <View style={styles.row}>
+        <Text style={styles.groundLabel}>Ground:</Text>
+        {link.hasRemote ? (
+          <>
+            <Chip
+              label="Supabase"
+              selected={link.ground === 'supabase'}
+              onPress={() => link.selectGround('supabase')}
+              a11y="Ground: Supabase database"
+            />
+            <Chip
+              label="Demo"
+              selected={link.ground === 'demo'}
+              onPress={() => link.selectGround('demo')}
+              a11y="Ground: offline demo ground on this phone"
+            />
+          </>
+        ) : (
+          <Text style={styles.groundOffline}>offline demo on this phone</Text>
+        )}
       </View>
 
       <View style={styles.row}>
@@ -100,7 +124,14 @@ export function LinkPanel({ link, crewId }: Props) {
         </Pressable>
       </View>
       {link.link === 'AOS' && (
-        <Text style={styles.hint}>Fill and reset work in LOS only.</Text>
+        <Text style={styles.hint}>
+          Fill, reset and ground switch work in LOS only.
+        </Text>
+      )}
+      {link.link === 'LOS' && link.ground === 'supabase' && (
+        <Text style={styles.hint}>
+          Reset clears this phone only. The Supabase log is append-only.
+        </Text>
       )}
 
       {banner && (
@@ -159,6 +190,8 @@ const styles = StyleSheet.create({
     borderColor: theme.text,
   },
   resetText: { ...ff.bodyBold, color: theme.text, fontSize: fs.small },
+  groundLabel: { ...ff.bodySemi, color: theme.text, fontSize: fs.body },
+  groundOffline: { ...ff.body, color: theme.textSecondary, fontSize: fs.small },
   hint: { ...ff.body, color: theme.textSecondary, fontSize: fs.small },
   disabled: { opacity: 0.35 },
   pressed: { opacity: 0.7 },

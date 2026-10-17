@@ -8,7 +8,9 @@ import {
 } from '@somacast/core';
 import {
   backlogEntries,
+  MAX_FAILS_IN_A_ROW,
   clearOutbox,
+  demoGroundCheck,
   duplicateCount,
   fillOutbox,
   formatCount,
@@ -64,6 +66,12 @@ describe('link panel text', () => {
     );
     expect(statusText({ phase: 'interrupted', remaining: 1800 })).toBe(
       'Link lost. 1,800 still waiting',
+    );
+    expect(
+      statusText({ phase: 'interrupted', remaining: 5, error: 'RLS said no' }),
+    ).toBe('Sync paused after repeated errors: RLS said no. 5 still waiting');
+    expect(statusText({ phase: 'unverified', error: 'timeout' })).toBe(
+      'Synced, but the ground count failed: timeout',
     );
   });
 });
@@ -153,7 +161,7 @@ describe('syncOutbox', () => {
       }),
       {
         isLinkUp: () => true,
-        ground,
+        check: demoGroundCheck(() => ground),
         onStatus: s => seen.push(s),
         pause: async () => {
           pauses++;
@@ -190,7 +198,7 @@ describe('syncOutbox', () => {
       mockTransport(ground, { linkUp: () => up }),
       {
         isLinkUp: () => up,
-        ground,
+        check: demoGroundCheck(() => ground),
         onStatus: () => {},
         pause: async () => {
           if (++batches === 2) up = false; // LOS after two batches
@@ -200,5 +208,47 @@ describe('syncOutbox', () => {
     expect(final).toEqual({ phase: 'interrupted', remaining: 600 });
     expect(ground.size()).toBe(400);
     expect(store.pendingCount()).toBe(600);
+  });
+
+  it('stops after repeated failures instead of hammering a dead ground', async () => {
+    const store = await filledStore(1000);
+    let calls = 0;
+    const final = await syncOutbox(
+      store,
+      async () => {
+        calls++;
+        throw new Error('Ground refused batch: row-level security');
+      },
+      {
+        isLinkUp: () => true,
+        check: async () => ({ rows: 0, duplicates: 0 }),
+        onStatus: () => {},
+        pause: noPause,
+      },
+    );
+    expect(calls).toBe(MAX_FAILS_IN_A_ROW);
+    expect(final).toEqual({
+      phase: 'interrupted',
+      remaining: 1000,
+      error: 'Ground refused batch: row-level security',
+    });
+  });
+
+  it('reports unverified when everything is sent but the ground count fails', async () => {
+    const store = await filledStore(10);
+    const final = await syncOutbox(
+      store,
+      async batch => ({ acked: batch.map(b => b.key) }),
+      {
+        isLinkUp: () => true,
+        check: async () => {
+          throw new Error('timeout');
+        },
+        onStatus: () => {},
+        pause: noPause,
+      },
+    );
+    expect(final).toEqual({ phase: 'unverified', error: 'timeout' });
+    expect(store.pendingCount()).toBe(0);
   });
 });

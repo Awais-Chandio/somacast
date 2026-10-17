@@ -1,10 +1,20 @@
-import React from 'react';
+import React, { useMemo } from 'react';
+import type { SupabaseClient } from '@supabase/supabase-js';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { theme } from '@somacast/core';
 import { Chip, SectionLabel } from '../../../shared/components';
 import { getDeviceOutbox } from '../../../sync/SqliteOutboxStore';
-import { useLinkPanel } from '../../link/controller/useLinkPanel';
+import {
+  createSupabaseTransport,
+  supabaseGroundCounts,
+} from '../../../sync/SupabaseTransport';
+import { accountLabel, type Account } from '../../auth/model/account';
+import { AccountBar } from '../../auth/view/AccountBar';
+import {
+  useLinkPanel,
+  type RemoteGround,
+} from '../../link/controller/useLinkPanel';
 import { LinkPanel } from '../../link/view/LinkPanel';
 import { ff, fs } from '../../../shared/theme/typography';
 import { useTodayController } from '../controller/useTodayController';
@@ -14,16 +24,39 @@ import { ForecastCard } from './ForecastCard';
 import { ReadingsGrid } from './ReadingsGrid';
 import { TodayHeader } from './TodayHeader';
 
-// View: lays out what the controller hands it. No state logic, no health logic.
-export function TodayScreen() {
-  const outbox = getDeviceOutbox();
-  const link = useLinkPanel(outbox);
-  const c = useTodayController(outbox, link.refresh, link.resetEpoch);
+type Props = {
+  account: Account | null; // null = offline demo, no account
+  client: SupabaseClient | null;
+  onAccountAction: () => void; // sign out, or back to sign-in from the offline demo
+};
+
+// View: lays out what the controllers hand it. No state logic, no health logic.
+// Signed in: the account's own outbox, its crew only, and Supabase as the ground.
+export function TodayScreen({ account, client, onAccountAction }: Props) {
+  const outbox = getDeviceOutbox(account?.userId);
+  const crewId = account?.crewId ?? undefined;
+  const remote = useMemo<RemoteGround | null>(
+    () =>
+      client && crewId
+        ? {
+            transport: linkUp => createSupabaseTransport(client, { linkUp }),
+            check: () => supabaseGroundCounts(client, crewId),
+          }
+        : null,
+    [client, crewId],
+  );
+  const link = useLinkPanel(outbox, { remote });
+  const c = useTodayController(outbox, link.refresh, link.resetEpoch, crewId);
   const { view } = c;
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
       <TodayHeader />
+      <AccountBar
+        label={account ? accountLabel(account) : 'Offline demo, no account'}
+        action={account ? 'SIGN OUT' : 'SIGN IN'}
+        onAction={onAccountAction}
+      />
       <LinkPanel link={link} crewId={c.crewId} />
 
       <ScrollView contentContainerStyle={styles.content}>

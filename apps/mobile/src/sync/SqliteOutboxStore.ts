@@ -104,20 +104,32 @@ export class SqliteOutboxStore implements OutboxStore {
 
 export const OUTBOX_DB_NAME = 'somacast-outbox.db';
 
-// Opens (or creates) the outbox file. `location` is for tests; the app uses op-sqlite's default folder.
-// The key is left out when unset: the native open() rejects `location: undefined`.
-export function openOutboxStore(location?: string): SqliteOutboxStore {
-  return new SqliteOutboxStore(
-    open(
-      location ? { name: OUTBOX_DB_NAME, location } : { name: OUTBOX_DB_NAME },
-    ),
-  );
+// One outbox file per account: the black box belongs to whoever is signed in. A crew member's
+// outbox then holds only their own crew's entries, which RLS will accept; the offline demo keeps
+// the original file. Owner ids are Supabase user ids (uuid), safe in a file name.
+export function outboxDbName(owner?: string): string {
+  return owner ? `somacast-outbox-${owner}.db` : OUTBOX_DB_NAME;
 }
 
-let deviceOutbox: SqliteOutboxStore | null = null;
+// Opens (or creates) the outbox file. `location` is for tests; the app uses op-sqlite's default folder.
+// The key is left out when unset: the native open() rejects `location: undefined`.
+export function openOutboxStore(
+  location?: string,
+  owner?: string,
+): SqliteOutboxStore {
+  const name = outboxDbName(owner);
+  return new SqliteOutboxStore(open(location ? { name, location } : { name }));
+}
 
-// One outbox per app process, opened on first use.
-export function getDeviceOutbox(): SqliteOutboxStore {
-  deviceOutbox ??= openOutboxStore();
-  return deviceOutbox;
+const deviceOutboxes = new Map<string, SqliteOutboxStore>();
+
+// One outbox per account per app process, opened on first use. No owner = offline demo.
+export function getDeviceOutbox(owner?: string): SqliteOutboxStore {
+  const id = owner ?? '';
+  let store = deviceOutboxes.get(id);
+  if (!store) {
+    store = openOutboxStore(undefined, owner);
+    deviceOutboxes.set(id, store);
+  }
+  return store;
 }

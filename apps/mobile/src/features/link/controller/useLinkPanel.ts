@@ -1,12 +1,14 @@
 import { useCallback, useRef, useState } from 'react';
-import { MockGroundStore, mockTransport } from '@somacast/core';
+import { MockGroundStore, mockTransport, type Transport } from '@somacast/core';
 import {
   BACKLOG_SIZE,
   backlogEntries,
   clearOutbox,
+  demoGroundCheck,
   fillOutbox,
   outboxBreakdown,
   syncOutbox,
+  type GroundCheck,
   type Link,
   type LocalOutbox,
   type SyncStatus,
@@ -15,11 +17,20 @@ import {
 // Demo radio link: 10% of batches lost on the way up, 10% of acknowledgements lost on the way down.
 const LINK_FAULTS = { failRate: 0.1, lostAckRate: 0.1 };
 
-// Controller: link state, outbox count and sync progress. The sending logic lives in the model.
-// The ground side is an in-memory MockGroundStore until Phase 7 (Supabase).
+// Where synced entries go: the real Supabase ground, or the in-memory demo ground (offline demo).
+export type GroundMode = 'supabase' | 'demo';
+
+// The real ground, built by the screen from a signed-in Supabase client (see SupabaseTransport).
+export type RemoteGround = {
+  transport: (linkUp: () => boolean) => Transport;
+  check: GroundCheck;
+};
+
+// Controller: link state, outbox count, ground choice and sync progress. The sending logic lives in
+// the model. Without `remote` (offline, not signed in) only the demo ground is available.
 export function useLinkPanel(
   store: LocalOutbox,
-  opts: { random?: () => number } = {},
+  opts: { random?: () => number; remote?: RemoteGround | null } = {},
 ) {
   const [link, setLink] = useState<Link>('LOS'); // the app always starts in LOS
   const linkRef = useRef<Link>('LOS');
@@ -31,7 +42,11 @@ export function useLinkPanel(
   const ground = useRef(new MockGroundStore());
   // Bumped by a reset so the Today screen logs the day it is showing again.
   const [resetEpoch, setResetEpoch] = useState(0);
-  const { random } = opts;
+  const { random, remote } = opts;
+  const [groundMode, setGroundMode] = useState<GroundMode>(
+    remote ? 'supabase' : 'demo',
+  );
+  const groundRef = useRef<GroundMode>(groundMode);
 
   const refresh = useCallback(() => setOutbox(outboxBreakdown(store)), [store]);
 
@@ -39,13 +54,17 @@ export function useLinkPanel(
     if (syncing.current) return; // the running sync keeps going while the link is up
     syncing.current = true;
     const linkUp = () => linkRef.current === 'AOS';
+    // The real ground gets the real network (its own faults); the demo ground gets simulated faults.
+    const real = groundRef.current === 'supabase' && remote;
     try {
       await syncOutbox(
         store,
-        mockTransport(ground.current, { ...LINK_FAULTS, linkUp, random }),
+        real
+          ? remote.transport(linkUp)
+          : mockTransport(ground.current, { ...LINK_FAULTS, linkUp, random }),
         {
           isLinkUp: linkUp,
-          ground: ground.current,
+          check: real ? remote.check : demoGroundCheck(() => ground.current),
           onStatus: s => {
             setStatus(s);
             refresh();
@@ -55,7 +74,7 @@ export function useLinkPanel(
     } finally {
       syncing.current = false;
     }
-  }, [store, random, refresh]);
+  }, [store, random, remote, refresh]);
 
   // Returns the sync promise so tests (and callers) can await it.
   const toggleLink = useCallback(async () => {
@@ -86,7 +105,21 @@ export function useLinkPanel(
     [store, refresh],
   );
 
-  // Demo only, LOS only: empties the outbox and the mock ground so the demo can run again.
+  // LOS only, so a running sync never switches ground halfway.
+  const selectGround = useCallback(
+    (mode: GroundMode) => {
+      if (linkRef.current !== 'LOS' || fillingRef.current || syncing.current)
+        return;
+      if (mode === 'supabase' && !remote) return;
+      groundRef.current = mode;
+      setGroundMode(mode);
+      setStatus({ phase: 'idle' });
+    },
+    [remote],
+  );
+
+  // Demo only, LOS only: empties the outbox and the demo ground so the demo can run again.
+  // The Supabase log is append-only and is never touched from the phone.
   const resetDemo = useCallback(() => {
     if (linkRef.current !== 'LOS' || fillingRef.current) return;
     clearOutbox(store);
@@ -104,11 +137,15 @@ export function useLinkPanel(
     filling,
     canFill: demoAllowed,
     canReset: demoAllowed,
+    ground: groundMode,
+    hasRemote: Boolean(remote),
+    canSwitchGround: demoAllowed && Boolean(remote),
     resetEpoch,
     groundRows: () => ground.current.size(),
     toggleLink,
     fillBacklog,
     resetDemo,
+    selectGround,
     refresh,
   };
 }

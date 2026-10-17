@@ -16,13 +16,16 @@ const MAX_DAY = MISSION.days - 1;
 // No layout here (that is the view) and no health logic (that is the model / @somacast/core).
 // Every day the screen shows is also written to the black-box outbox; onLogged lets the link panel recount.
 // A new logEpoch (after a demo reset) logs the day on screen again.
+// lockedCrewId: a signed-in crew member sees and logs only their own crew.
 export function useTodayController(
   outbox: OutboxStore,
   onLogged?: () => void,
   logEpoch = 0,
+  lockedCrewId?: string,
 ) {
   const [scenario, setScenario] = useState<ScenarioKey>('normal');
-  const [crewId, setCrewId] = useState(DEFAULT_CREW_ID);
+  const [chosenCrewId, setCrewId] = useState(DEFAULT_CREW_ID);
+  const crewId = lockedCrewId ?? chosenCrewId;
   const [day, setDay] = useState(MAX_DAY);
 
   const sim = useMemo(() => simulateMission(scenario), [scenario]);
@@ -44,7 +47,7 @@ export function useTodayController(
   const nextDay = useCallback(() => setDay(d => Math.min(MAX_DAY, d + 1)), []);
 
   return {
-    crew: sim.crew,
+    crew: lockedCrewId ? sim.crew.filter(m => m.id === lockedCrewId) : sim.crew,
     scenarios: SCENARIO_OPTIONS,
     crewId,
     scenario,

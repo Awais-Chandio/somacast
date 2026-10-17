@@ -4,10 +4,14 @@ import { MemoryOutboxStore } from '@somacast/core';
 import { useTodayController, type TodayController } from './useTodayController';
 
 // Renders the hook inside a tiny component and keeps the latest result.
-async function renderController(outbox = new MemoryOutboxStore(), epoch = 0) {
+async function renderController(
+  outbox = new MemoryOutboxStore(),
+  epoch = 0,
+  lockedCrewId?: string,
+) {
   const ref: { current: TodayController | null } = { current: null };
   function Probe({ logEpoch }: { logEpoch: number }) {
-    ref.current = useTodayController(outbox, undefined, logEpoch);
+    ref.current = useTodayController(outbox, undefined, logEpoch, lockedCrewId);
     return null;
   }
   let root: ReactTestRenderer.ReactTestRenderer | undefined;
@@ -77,5 +81,17 @@ describe('useTodayController', () => {
     outbox.markSent(outbox.pending(n).map(i => i.key)); // what a reset does
     await c.setEpoch(1);
     expect(outbox.pendingCount()).toBe(n);
+  });
+
+  it('a signed-in crew member sees, picks and logs only their own crew', async () => {
+    const outbox = new MemoryOutboxStore();
+    const c = await renderController(outbox, 0, 'C2');
+    expect(c().crew.map(m => m.id)).toEqual(['C2']);
+    expect(c().crewId).toBe('C2');
+    await act(() => c().selectCrew('C1'));
+    expect(c().crewId).toBe('C2');
+    const crews = outbox.pending(100).map(i => i.entry.crewId);
+    expect(crews.length).toBeGreaterThan(0);
+    expect(new Set(crews)).toEqual(new Set(['C2']));
   });
 });

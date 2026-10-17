@@ -10,7 +10,7 @@ import {
   mockTransport,
   type LogEntry,
 } from '@somacast/core';
-import { openOutboxStore } from './SqliteOutboxStore';
+import { openOutboxStore, outboxDbName } from './SqliteOutboxStore';
 
 // op-sqlite is native (JSI) and cannot run in Node. Jest uses __mocks__/@op-engineering/op-sqlite.ts,
 // which runs the same SQL on Node's built-in SQLite, so the queries here are real.
@@ -96,6 +96,21 @@ describe('SqliteOutboxStore', () => {
       const after = openOutboxStore(dir); // like the app being killed and reopened
       expect(after.pendingCount()).toBe(5000);
       expect(after.pending(1)[0]!.entry.id).toBe('e0');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('each account has its own outbox file; no owner = the offline demo file', () => {
+    expect(outboxDbName()).toBe('somacast-outbox.db');
+    expect(outboxDbName('u-1')).toBe('somacast-outbox-u-1.db');
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'somacast-outbox-'));
+    try {
+      const maya = openOutboxStore(dir, 'u-maya');
+      const offline = openOutboxStore(dir);
+      for (const e of entries(3)) enqueue(offline, { ...e, crewId: 'C2' });
+      expect(maya.pendingCount()).toBe(0); // offline C2 entries never reach Maya's sync
+      expect(offline.pendingCount()).toBe(3);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }

@@ -39,6 +39,7 @@ describe('outbox', () => {
     expect(ground.size()).toBe(0);
     expect(store.pendingCount()).toBe(50);
     expect(r.failedBatches).toBe(3);
+    expect(r.lastError).toBe('LOS: no link');
   });
 
   it('enqueueing the same entry twice keeps one copy', () => {

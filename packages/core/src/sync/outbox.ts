@@ -69,6 +69,7 @@ export type FlushResult = {
   failedBatches: number;
   acked: number;
   remaining: number;
+  lastError?: string; // message of the last failed batch, for the UI and logs
 };
 
 // Sends pending items in batches until the outbox is empty or maxBatches attempts are used.
@@ -97,16 +98,17 @@ export async function flushOutbox(
       store.bumpAttempts(notAcked);
       result.sentBatches++;
       result.acked += valid.length;
-    } catch {
+    } catch (e) {
       store.bumpAttempts(batch.map(b => b.key));
       result.failedBatches++;
+      result.lastError = e instanceof Error ? e.message : String(e);
     }
   }
   result.remaining = store.pendingCount();
   return result;
 }
 
-// Stand-in for the ground database until Phase 7 (Supabase). It ignores keys it has already stored.
+// In-memory ground database: the offline "demo ground" (Supabase is the real one). It ignores keys it has already stored.
 export class MockGroundStore {
   private rows = new Map<string, LogEntry>();
   receive(batch: OutboxItem[]): string[] {
