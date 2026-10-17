@@ -1,5 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
+import { AlertTriangle } from 'lucide-react-native';
 import { size, theme, weather } from '@somacast/core';
 import { ICON_STROKE, weatherIcons } from '../../../shared/theme/icons';
 import { ff, fs } from '../../../shared/theme/typography';
@@ -7,6 +8,7 @@ import type { TodayView } from '../model/todayModel';
 
 const ICON_SIZE = size.icon[2]; // 32
 const HOLDER_SIZE = size.icon[3]; // 48
+const TAG_ICON_SIZE = size.icon[0]; // 16
 
 export function ForecastCard({ view }: { view: TodayView }) {
   const w = weather[view.state];
@@ -35,7 +37,13 @@ export function ForecastCard({ view }: { view: TodayView }) {
       <View style={[styles.stateBar, { backgroundColor: w.color }]} />
       {lowConfidence && (
         <View style={styles.lowTag}>
-          <Text style={styles.lowTagText}>⚠ LOW CONFIDENCE</Text>
+          <AlertTriangle
+            size={TAG_ICON_SIZE}
+            color={theme.accent}
+            strokeWidth={ICON_STROKE}
+            testID="low-confidence-icon"
+          />
+          <Text style={styles.lowTagText}>LOW CONFIDENCE</Text>
         </View>
       )}
     </View>
@@ -74,6 +82,9 @@ const styles = StyleSheet.create({
   stateBar: { height: 4, borderRadius: 2, marginTop: 12 },
   lowTag: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     marginTop: 12,
     borderWidth: 1.5,
     borderColor: theme.accent,
