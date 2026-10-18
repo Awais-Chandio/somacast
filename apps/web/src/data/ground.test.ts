@@ -86,17 +86,27 @@ describe('rowsToReadings', () => {
       received_at: at(0),
       payload: { simulated: true, demoBacklog: true, seq: 0 },
     };
-    const notSimulated: ReadingRow = {
+    const unknownSource: ReadingRow = {
       ...good[0]!,
       key: 'k2',
-      payload: { ...good[0]!.payload, simulated: false },
+      payload: { ...good[0]!.payload, source: 'guessed' },
     };
     const otherCrew: ReadingRow = { ...good[0]!, key: 'k3', crew_id: 'C2' }; // payload says C1
-    const out = rowsToReadings([...good, backlog, notSimulated, otherCrew]);
+    const out = rowsToReadings([...good, backlog, unknownSource, otherCrew]);
     expect(out.get('C1')?.readings).toHaveLength(1);
     expect(out.get('C1')?.skipped).toBe(2);
     expect(out.get('C2')?.readings).toHaveLength(0);
     expect(out.get('C2')?.skipped).toBe(1);
+  });
+
+  it('still reads rows synced before readings had a source (simulated: true)', () => {
+    const rows = readingRows(normal, 'normal', 'C1', [5, 6]).map(r => {
+      const { source: _s, ...legacy } = r.payload;
+      return { ...r, payload: { ...legacy, simulated: true } };
+    });
+    const cr = rowsToReadings(rows).get('C1');
+    expect(cr?.skipped).toBe(0);
+    expect(cr?.readings.map(r => r.source)).toEqual(['simulated', 'simulated']);
   });
 
   it('never mixes scenarios: the most recently received scenario wins', () => {

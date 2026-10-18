@@ -47,6 +47,22 @@ function baselineFacts(
   };
 }
 
+// Where this crew member's readings up to asOfDay came from, so the handoff names it honestly.
+function sourceFact(
+  readings: DailyReading[],
+  crewId: string,
+  asOfDay: number,
+): Pick<HandoffFacts, 'source'> {
+  const kinds = new Set(
+    readings
+      .filter(r => r.crewId === crewId && r.day <= asOfDay)
+      .map(r => r.source),
+  );
+  if (kinds.size > 1) return { source: 'mixed' };
+  const [only] = kinds;
+  return only ? { source: only } : {};
+}
+
 export function buildHandoff(
   readings: DailyReading[],
   alerts: Alert[],
@@ -69,6 +85,7 @@ export function buildHandoff(
     })),
     blackout: ctx.blackout,
     ...(ctx.heldEntries === undefined ? {} : { heldEntries: ctx.heldEntries }),
+    ...sourceFact(readings, crew.id, ctx.asOfDay),
     baseline: baselineFacts(readings, crew.id, ctx.asOfDay, t),
   };
 

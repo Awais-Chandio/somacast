@@ -1,11 +1,13 @@
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@somacast/core';
-import { SimulatedBadge } from '../../../shared/components';
+import { SourceBadge } from '../../../shared/components';
+import type { SourceLabel } from '../../../shared/model/missionData';
 import { useCopy } from '../../../shared/copy/useCopy';
 import { ff, fs } from '../../../shared/theme/typography';
 
-export function TodayHeader() {
+// badge: where the values on screen came from (simulated, imported, ...).
+export function TodayHeader({ badge }: { badge: SourceLabel }) {
   const { words } = useCopy();
   return (
     <View style={styles.header}>
@@ -15,21 +17,25 @@ export function TodayHeader() {
         </Text>
         <Text style={styles.subtitle}>{words.tagline}</Text>
       </View>
-      <SimulatedBadge />
+      <SourceBadge text={badge.text} a11y={badge.a11y} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // Wraps: a long badge ("IMPORTED DATA (example file)") moves under the tagline instead of
+  // squeezing the wordmark.
   header: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     alignItems: 'center',
+    gap: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: theme.border,
   },
-  text: { flex: 1 },
+  text: { flexGrow: 1, flexShrink: 0 },
   title: {
     ...ff.heading,
     color: theme.text,

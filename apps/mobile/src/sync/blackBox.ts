@@ -4,7 +4,7 @@ import {
   indexByDay,
   type LogEntry,
   type OutboxStore,
-  type SimulationResult,
+  type MissionData,
 } from '@somacast/core';
 
 // Black-box log (REQ-007): what the Today screen showed for one crew member on one day.
@@ -12,7 +12,7 @@ import {
 // again produces the same idempotency keys and the outbox ignores the repeat.
 // The scenario is part of the id because each scenario is a different simulated mission.
 export function blackBoxEntries(
-  sim: SimulationResult,
+  sim: MissionData,
   scenario: string,
   crewId: string,
   day: number,
@@ -46,7 +46,7 @@ export function blackBoxEntries(
 // The whole mission so far: blackBoxEntries for every day 0..throughDay. Same stable ids as a day
 // the screen shows, so recording the history and visiting a day never make two entries.
 export function missionHistory(
-  sim: SimulationResult,
+  sim: MissionData,
   scenario: string,
   crewId: string,
   throughDay: number,

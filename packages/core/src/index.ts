@@ -15,6 +15,19 @@ export {
 } from './simulation/simulator';
 export { scenarios } from './simulation/scenarios';
 
+// sources: the plug socket. Simulator, CSV import (later manual entry or a device) all hand the
+// engine the same DailyReading[], so the source can change and nothing else does.
+export type { ReadingSource, MissionData } from './sources/readingSource';
+export { SimulatorSource } from './sources/simulatorSource';
+export {
+  CSV_COLUMNS,
+  CsvImportSource,
+  parseReadingsCsv,
+  readingsToCsv,
+  type CsvParseResult,
+  type CsvRowError,
+} from './sources/csvImportSource';
+
 // engine: baseline, anomalies, 72 h forecast (rules only, no LLM)
 export { thresholds, badDirection, type Thresholds } from './engine/thresholds';
 export {

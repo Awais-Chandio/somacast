@@ -11,7 +11,16 @@ export const CrewSchema = z.object({
   name: z.string().min(1),
 });
 
-export const ReadingSchema = z.object({
+// Where a reading came from. Every reading says so, and a screen labels it by this field.
+export const sourceKinds = [
+  'simulated',
+  'imported',
+  'manual',
+  'device',
+] as const;
+export const SourceKindSchema = z.enum(sourceKinds);
+
+const ReadingFieldsSchema = z.object({
   crewId: z.string().min(1),
   day: z.number().int().min(0),
   date: isoDate,
@@ -22,8 +31,20 @@ export const ReadingSchema = z.object({
   cabinCo2: z.number().min(0),
   radiationDose: z.number().min(0),
   psychCheckin: z.number().int().min(1).max(5),
-  simulated: z.literal(true), // every vital must say it is simulated
+  source: SourceKindSchema,
 });
+
+// Readings synced before the source field existed carry `simulated: true` instead (they are
+// stored on the ground for good). Those, and only those, are read as source 'simulated'.
+function legacySimulated(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null) return value;
+  const { simulated, ...rest } = value as Record<string, unknown>;
+  if (simulated === true && !('source' in rest))
+    return { ...rest, source: 'simulated' };
+  return value;
+}
+
+export const ReadingSchema = z.preprocess(legacySimulated, ReadingFieldsSchema);
 
 export const EffectSchema = z
   .object({
@@ -91,6 +112,9 @@ export const HandoffFactsSchema = z.object({
   ),
   blackout: z.object({ start: isoDateTime, end: isoDateTime }).nullable(),
   heldEntries: z.number().int().min(0).optional(),
+  // Where this crew member's readings came from; 'mixed' for more than one source. Absent on
+  // handoffs made before readings carried a source (those were all simulated).
+  source: z.enum([...sourceKinds, 'mixed']).optional(),
   baseline: z.object({
     days: z.number().int().min(0), // days the baseline was learned from
     learningDays: z.number().int().min(1), // days needed before it is trusted
@@ -132,6 +156,7 @@ export const ProfileSchema = z
     message: 'a crew account needs a crew_id',
   });
 
+export type SourceKind = z.infer<typeof SourceKindSchema>;
 export type Crew = z.infer<typeof CrewSchema>;
 export type DailyReading = z.infer<typeof ReadingSchema>;
 export type Effect = z.infer<typeof EffectSchema>;

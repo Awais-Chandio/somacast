@@ -19,7 +19,7 @@ describe('blackBoxEntries', () => {
     expect(out.filter(e => e.kind === 'reading')).toHaveLength(1);
     expect(out.filter(e => e.kind === 'alert')).toHaveLength(alerts.length);
     for (const e of out) expect(LogEntrySchema.safeParse(e).success).toBe(true);
-    expect(out[0]!.payload.simulated).toBe(true);
+    expect(out[0]!.payload.source).toBe('simulated');
   });
 
   it('ids are stable: the same day gives the same ids', () => {

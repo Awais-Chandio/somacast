@@ -103,6 +103,59 @@ describe('useTodayController', () => {
     expect(new Set(crews)).toEqual(new Set(['C2']));
   });
 
+  describe('data source', () => {
+    it('starts simulated with the SIMULATED DATA badge', async () => {
+      const c = await renderController();
+      expect(c().source).toBe('simulated');
+      expect(c().sources.map(s => s.key)).toEqual([
+        'simulated',
+        'importExample',
+      ]);
+      expect(c().badge.text).toBe('SIMULATED DATA');
+      expect(c().importReport).toBeNull();
+    });
+
+    it('Import CSV: example file, its own crew and days, honest badge, same engine', async () => {
+      const outbox = new MemoryOutboxStore();
+      const c = await renderController(outbox);
+      await act(() => c().selectSource('importExample'));
+      expect(c().badge.text).toBe('IMPORTED DATA (example file)');
+      expect(c().badge.readingsLabel).toBe('LATEST READINGS (IMPORTED)');
+      expect(c().scenarios).toEqual([]); // scenarios only shape simulated data
+      expect(c().crew.map(m => m.id)).toEqual(['EX1']);
+      expect(c().crewId).toBe('EX1');
+      expect(c().maxDay).toBe(29);
+      expect(c().day).toBe(29); // a new source opens on its last day
+      expect(c().view.alerts.map(a => a.metricLabel)).toContain(
+        'Sleep duration',
+      );
+      // Logged under its own key, never mixed with a simulated scenario's days.
+      expect(outbox.has('EX1:reading:import-example-EX1-29-reading')).toBe(
+        true,
+      );
+
+      await act(() => c().prevDay());
+      expect(c().day).toBe(28);
+      await act(() => c().selectSource('simulated'));
+      expect(c().badge.text).toBe('SIMULATED DATA');
+      expect(c().crewId).toBe('C1');
+      expect(c().day).toBe(89);
+    });
+
+    it('signed in: locked to simulated, so only simulated data reaches the real ground', async () => {
+      const c = await renderController(
+        new MemoryOutboxStore(),
+        0,
+        'C1',
+        demoMissionFor('maya@somacast.test'),
+      );
+      expect(c().sources.map(s => s.key)).toEqual(['simulated']);
+      await act(() => c().selectSource('importExample'));
+      expect(c().source).toBe('simulated');
+      expect(c().badge.text).toBe('SIMULATED DATA');
+    });
+  });
+
   describe('signed in: whole mission history', () => {
     const readingDays = (outbox: MemoryOutboxStore) =>
       outbox

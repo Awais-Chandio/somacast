@@ -8,9 +8,10 @@ Somacast is decision support, not a medical device. It never diagnoses. The flig
 
 | Limitation | Detail |
 | --- | --- |
-| Simulated vitals | Every heart rate, HRV, sleep, exercise, CO2, radiation and check-in value is made by a seeded simulator (`packages/core/src/simulation`). Each reading carries `simulated: true`, and every screen that shows vitals says "Simulated data". Real astronaut HR and HRV are not public. |
+| Simulated vitals | Every heart rate, HRV, sleep, exercise, CO2, radiation and check-in value is made by a seeded simulator (`packages/core/src/simulation`). Each reading carries `source: 'simulated'`, and every screen that shows vitals says "Simulated data". Real astronaut HR and HRV are not public. |
 | Partial calibration | Only sleep is calibrated to published ISS statistics (Barger et al. 2014), and cabin CO2 is kept inside the published ISS range. The other baselines are guesses. See [data-sources.md](data-sources.md). |
 | NASA DONKI not yet used | A fetch script exists (`packages/core/scripts/fetch-donki.mjs`), but no DONKI data has been fetched into the repo. The solar storm scenario uses an illustrative spike on days 60 to 62, not a real event date. |
+| No real sensor | No wearable or device is connected. The CSV import (`packages/core/src/sources/csvImportSource.ts`) has only read the bundled example file, whose values are made up for format illustration. It is offline-demo only; signed-in accounts stay on simulated data. See [real-mission.md](real-mission.md). |
 | Simulated crew | The four crew members (Maya, Kenji, Amara, Luis), the flight surgeon Daniel and every scenario are fictional. |
 
 ## Engine

@@ -31,8 +31,10 @@ describe('simulator', () => {
     });
     expect(crew).toHaveLength(4);
     expect(readings).toHaveLength(360);
-    for (const r of readings)
+    for (const r of readings) {
       expect(ReadingSchema.safeParse(r).success).toBe(true);
+      expect(r.source).toBe('simulated');
+    }
   });
 
   it('sleep matches the ISS calibration: mean near 6.09 h, about 44% of nights under 6 h', () => {
@@ -116,11 +118,23 @@ describe('simulatedCrewName', () => {
 });
 
 describe('schemas and scenarios', () => {
-  it('rejects a reading that is not marked simulated', () => {
+  it('rejects a reading that does not say where it came from', () => {
     const { readings } = simulate({ ...base, scenario: scenarios.normal });
+    const { source: _s, ...noSource } = readings[0]!;
+    expect(ReadingSchema.safeParse(noSource).success).toBe(false);
     expect(
-      ReadingSchema.safeParse({ ...readings[0], simulated: false }).success,
+      ReadingSchema.safeParse({ ...readings[0], source: 'guessed' }).success,
     ).toBe(false);
+    expect(
+      ReadingSchema.safeParse({ ...noSource, simulated: false }).success,
+    ).toBe(false);
+  });
+
+  it('reads a reading synced before the source field (simulated: true) as simulated', () => {
+    const { readings } = simulate({ ...base, scenario: scenarios.normal });
+    const { source: _s, ...rest } = readings[0]!;
+    const parsed = ReadingSchema.safeParse({ ...rest, simulated: true });
+    expect(parsed.success && parsed.data).toEqual(readings[0]);
   });
 
   it('rejects an alert without a reason', () => {

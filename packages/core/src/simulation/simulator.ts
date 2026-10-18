@@ -132,7 +132,7 @@ export function simulate(options: SimulationOptions): SimulationResult {
         cabinCo2: round2(clamp(co2 + d('cabinCo2'), 0.3, 20)),
         radiationDose: round2(clamp(dose + d('radiationDose'), 0, 50)),
         psychCheckin: Math.round(clamp(psych + d('psychCheckin'), 1, 5)),
-        simulated: true,
+        source: 'simulated',
       });
     }
   }

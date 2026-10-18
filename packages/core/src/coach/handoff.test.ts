@@ -63,7 +63,23 @@ describe('SBAR handoff, Kenji blackout decline day 75', () => {
     expect(h.background).toContain(
       'Personal baseline learned from mission days 0 to 27 (28 days); mission day 75 is 48 days after it.',
     );
-    expect(h.background).toContain('simulated');
+    expect(h.background).toContain('All vitals are simulated.');
+    expect(h.facts?.source).toBe('simulated');
+  });
+
+  it('Background names the real source: imported readings are never called simulated', () => {
+    const imported = readings.map(r => ({ ...r, source: 'imported' as const }));
+    const hi = buildHandoff(imported, alerts, forecast, kenji, ctx);
+    expect(hi.background).toContain(
+      'All vitals were imported from a data file.',
+    );
+    expect(hi.background).not.toContain('simulated');
+    const mixed = imported.map(r =>
+      r.day === 0 ? { ...r, source: 'simulated' as const } : r,
+    );
+    expect(
+      buildHandoff(mixed, alerts, forecast, kenji, ctx).background,
+    ).toContain('Vitals come from more than one source.');
   });
 
   it('Assessment: every alert reason', () => {

@@ -75,16 +75,18 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
   );
   const { view } = c;
   handoffAt.current = contact => {
-    const e = handoffEntry(c.sim, c.scenario, c.crewId, c.day, contact);
+    const e = handoffEntry(c.sim, c.logKey, c.crewId, c.day, contact);
     return e ? [e] : [];
   };
   const { words, mode } = useCopy();
-  const handoff = link.contact ? handoffCardView(link.contact, mode) : null;
+  const handoff = link.contact
+    ? handoffCardView(link.contact, mode, c.logKey)
+    : null;
   const notes = useGroundNotes(client, crewId, link.contact);
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>
-      <TodayHeader />
+      <TodayHeader badge={c.badge} />
       <AccountBar
         label={
           account ? accountLabel(account, words) : 'Offline demo, no account'
@@ -101,6 +103,20 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
         <SectionLabel>WORDING</SectionLabel>
         <ModeToggle />
 
+        <SectionLabel>DATA SOURCE</SectionLabel>
+        <View style={styles.row}>
+          {c.sources.map(s => (
+            <Chip
+              key={s.key}
+              label={s.label}
+              selected={s.key === c.source}
+              onPress={() => c.selectSource(s.key)}
+              a11y={`Data source ${s.label}`}
+            />
+          ))}
+        </View>
+        {c.importReport && <Text style={styles.note}>{c.importReport}</Text>}
+
         <SectionLabel>{words.member.toUpperCase()}</SectionLabel>
         <View style={styles.row}>
           {c.crew.map(m => (
@@ -114,18 +130,22 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
           ))}
         </View>
 
-        <SectionLabel>SCENARIO</SectionLabel>
-        <View style={styles.row}>
-          {c.scenarios.map(s => (
-            <Chip
-              key={s.key}
-              label={s.label}
-              selected={s.key === c.scenario}
-              onPress={() => c.selectScenario(s.key)}
-              a11y={`Scenario ${s.label}`}
-            />
-          ))}
-        </View>
+        {c.scenarios.length > 0 && (
+          <>
+            <SectionLabel>SCENARIO</SectionLabel>
+            <View style={styles.row}>
+              {c.scenarios.map(s => (
+                <Chip
+                  key={s.key}
+                  label={s.label}
+                  selected={s.key === c.scenario}
+                  onPress={() => c.selectScenario(s.key)}
+                  a11y={`Scenario ${s.label}`}
+                />
+              ))}
+            </View>
+          </>
+        )}
 
         <SectionLabel>{words.day.toUpperCase()}</SectionLabel>
         <DayStepper
@@ -160,7 +180,7 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
           <ActionCard key={a.id} action={a} />
         ))}
 
-        <SectionLabel>LATEST READINGS (SIMULATED)</SectionLabel>
+        <SectionLabel>{c.badge.readingsLabel}</SectionLabel>
         <ReadingsGrid readings={view.latest} />
 
         <Text style={styles.footer}>
@@ -184,6 +204,13 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   muted: { ...ff.body, color: theme.textSecondary, fontSize: fs.body },
+  note: {
+    ...ff.body,
+    color: theme.textSecondary,
+    fontSize: fs.small,
+    lineHeight: fs.small * 1.5,
+    marginTop: 8,
+  },
   footer: {
     ...ff.body,
     color: theme.textSecondary,

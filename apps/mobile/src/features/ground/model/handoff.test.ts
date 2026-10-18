@@ -80,6 +80,13 @@ describe('handoffEntry (Kenji, blackout decline, day 75)', () => {
     expect(entry.payload.situation).toBe(space.situation);
   });
 
+  it('card view: only for the data on screen (scenario or import)', () => {
+    const sent = { ...contact, ground: 'demo' as const, sent: [entry] };
+    expect(handoffCardView(sent, 'space', 'blackoutDecline')).not.toBeNull();
+    expect(handoffCardView(sent, 'space', 'import-example')).toBeNull();
+    expect(handoffCardView(sent, 'space', 'normal')).toBeNull();
+  });
+
   it('card view: nothing when no handoff was sent', () => {
     expect(handoffCardView({ ...contact, ground: 'demo', sent: [] })).toBe(
       null,

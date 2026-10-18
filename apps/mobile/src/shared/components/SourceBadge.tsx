@@ -3,15 +3,14 @@ import { StyleSheet, Text, View } from 'react-native';
 import { theme } from '@somacast/core';
 import { ff, fs } from '../theme/typography';
 
-// Required on every screen that shows vitals: all values are simulated.
-export function SimulatedBadge() {
+type Props = { text: string; a11y: string };
+
+// Required on every screen that shows vitals: says where the values came from
+// ("SIMULATED DATA", "IMPORTED DATA (example file)"). The text comes from model/missionData.
+export function SourceBadge({ text, a11y }: Props) {
   return (
-    <View
-      style={styles.badge}
-      accessible
-      accessibilityLabel="All values on this screen are simulated data"
-    >
-      <Text style={styles.text}>SIMULATED DATA</Text>
+    <View style={styles.badge} accessible accessibilityLabel={a11y}>
+      <Text style={styles.text}>{text}</Text>
     </View>
   );
 }

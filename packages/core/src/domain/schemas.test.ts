@@ -15,7 +15,7 @@ describe('ReadingSchema: NaN, infinite and negative input', () => {
     cabinCo2: 2.4,
     radiationDose: 0.5,
     psychCheckin: 4,
-    simulated: true,
+    source: 'simulated',
   };
 
   it('accepts a normal reading', () => {

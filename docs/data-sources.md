@@ -1,6 +1,6 @@
 # Data sources and honesty notes
 
-Somacast uses **simulated** crew vitals. Real daily astronaut heart rate and HRV are not public, so every reading carries `simulated: true` and the app labels it as simulated.
+Somacast uses **simulated** crew vitals. Real daily astronaut heart rate and HRV are not public, so every reading carries `source: 'simulated'` and the app labels it as simulated. The optional CSV import reads a bundled example file with made-up values; those readings carry `source: 'imported'` and the badge says "IMPORTED DATA (example file)" (see [real-mission.md](real-mission.md)).
 
 | Item | Value | Status | Source |
 | --- | --- | --- | --- |

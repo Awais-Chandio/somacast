@@ -67,6 +67,16 @@ export function formatDuration(ms: number): string {
 
 const hhmm = (iso: string) => `${iso.slice(0, 10)} ${iso.slice(11, 16)} UTC`;
 
+// The handoff says where the numbers came from. No source = a handoff made before readings
+// carried one, when every reading was simulated.
+const vitalsSource: Record<NonNullable<HandoffFacts['source']>, string> = {
+  simulated: 'All vitals are simulated.',
+  imported: 'All vitals were imported from a data file.',
+  manual: 'All vitals were entered by hand.',
+  device: 'All vitals come from a connected device.',
+  mixed: 'Vitals come from more than one source.',
+};
+
 export type HandoffText = Pick<
   Handoff,
   'situation' | 'background' | 'assessment' | 'recommendation'
@@ -100,9 +110,11 @@ export function handoffText(
     b.lastDay === null || b.days < b.learningDays
       ? `Personal baseline still learning (${b.days} of ${b.learningDays} days).`
       : `Personal baseline learned from ${words.day}s 0 to ${b.lastDay} (${b.days} days); ${words.day} ${f.asOfDay} is ${f.asOfDay - b.lastDay} ${f.asOfDay - b.lastDay === 1 ? 'day' : 'days'} after it.`;
-  const background = [blackout, baseline, 'All vitals are simulated.'].join(
-    ' ',
-  );
+  const background = [
+    blackout,
+    baseline,
+    vitalsSource[f.source ?? 'simulated'],
+  ].join(' ');
 
   const assessment = f.alerts.length
     ? f.alerts.map(a => `- ${alertText(a, mode)}`).join('\n')

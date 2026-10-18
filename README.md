@@ -4,7 +4,9 @@
 
 Somacast learns each crew member's own normal, forecasts the next 72 hours as **Clear, Cloudy or Storm** with the reason, keeps a black-box log while the link to Earth is down, and hands the flight surgeon a structured SBAR summary when it returns.
 
-> All vitals in Somacast are **simulated** and labelled as simulated. Somacast is **decision support, not a medical device**: it never diagnoses, and the flight surgeon decides. Every threshold is illustrative, expert review required.
+Somacast is not a sensor. It is the brain on top of the sensors crews already wear: it works offline, knows each person's normal, and hands the doctor a structured report when the link returns. How it would sit in a real mission, and the `ReadingSource` socket that lets the data source change while the engine stays the same: [docs/real-mission.md](docs/real-mission.md).
+
+> All vitals in Somacast are **simulated** and labelled as simulated. The one exception is the optional **Import CSV** source, which reads a bundled example file with made-up values and is labelled "IMPORTED DATA (example file)". Somacast is **decision support, not a medical device**: it never diagnoses, and the flight surgeon decides. Every threshold is illustrative, expert review required.
 
 ## Architecture
 
@@ -92,6 +94,7 @@ A **Space / Earth** switch on the phone (Today screen) and in the console header
 packages/core/src/          Pure TypeScript, shared by mobile and web
   domain/                   Metrics catalogue and Zod schemas (reading, alert, forecast, handoff)
   simulation/               Seeded simulator and scenarios (all data simulated)
+  sources/                  ReadingSource socket: simulator source and CSV import
   engine/                   Baseline, z-score anomalies, 72 h forecast (rules only)
   coach/                    Crew actions and the SBAR handoff (rules only)
   sync/                     Black-box outbox and idempotent sync
@@ -115,10 +118,11 @@ apps/web/src/               Ground console for flight surgeons (React + Vite), s
 
 - [NASA hazard and risk map](docs/nasa-risk-map.md): which NASA human spaceflight risks Somacast tracks a related signal for, and where the gaps are.
 - [Data sources](docs/data-sources.md): what is published, what is simulated, what is a guess.
+- [Demo vs real mission](docs/real-mission.md): what the demo stands in for, the `ReadingSource` socket and the CSV import format.
 
 ## Docs
 
-[ConOps](docs/conops.md) · [Requirements](docs/requirements.md) · [Engine](docs/engine.md) · [Verification](docs/verification.md) · [Limitations](docs/limitations.md) · [Data sources](docs/data-sources.md) · [NASA risk map](docs/nasa-risk-map.md) · [Earth mode](docs/earth-mode.md) · [Demo script](docs/demo-script.md) · [Submission draft](docs/submission-draft.md)
+[ConOps](docs/conops.md) · [Requirements](docs/requirements.md) · [Engine](docs/engine.md) · [Verification](docs/verification.md) · [Limitations](docs/limitations.md) · [Data sources](docs/data-sources.md) · [Demo vs real mission](docs/real-mission.md) · [NASA risk map](docs/nasa-risk-map.md) · [Earth mode](docs/earth-mode.md) · [Demo script](docs/demo-script.md) · [Submission draft](docs/submission-draft.md)
 
 ---
 

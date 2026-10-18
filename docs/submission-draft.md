@@ -10,6 +10,8 @@ Somacast
 
 Body weather for crews beyond Earth: Somacast learns each crew member's own normal, forecasts the next 72 hours as Clear, Cloudy or Storm, and keeps working when the link to Earth is gone.
 
+Somacast is not a sensor. It is the brain on top of the sensors crews already wear: it works offline, knows each person's normal, and hands the doctor a structured report when the link returns.
+
 ## Summary
 
 On a crewed Mars mission the flight surgeon is on Earth. Messages take up to about 22 minutes each way, and near solar conjunction the link can be disrupted for two to three weeks. Somacast runs on the crew's phone without a network. It learns each crew member's own baseline for sleep, heart rate, HRV, exercise, mood, cabin CO2 and radiation, flags changes that persist, and forecasts the next 72 hours as Clear, Cloudy or Storm, always with the reason. During a blackout a black-box log keeps every entry. When the link returns, the backlog syncs with zero duplicates and the flight surgeon gets an SBAR handoff with evidence, then can send a note back. An Earth mode rewords the same engine for remote teams on Earth. All vitals are simulated. Somacast is decision support, not a medical device.
@@ -24,6 +26,7 @@ On a crewed Mars mission the flight surgeon is on Earth. Messages take up to abo
 | Hand off to the ground | At acquisition of signal the backlog syncs in batches with idempotency keys (a 5,000-item backlog test lands with no duplicates), and an SBAR handoff with evidence goes to the flight surgeon's console. |
 | Explain every alert | Each alert carries metric, value, usual value, z-score, days and a plain-English reason. No black box in the logic. |
 | Keep the doctor in charge | Suggestions are behaviour and scheduling only, never medication, and labelled "illustrative, expert review required". The flight surgeon decides and can uplink a note. |
+| Fit real sensors | The engine reads readings through one `ReadingSource` socket. The simulator and a CSV import both plug in, and a test shows the same numbers from either give the same alerts and forecast. No real device is connected. See [real-mission.md](real-mission.md). |
 | Reach beyond space | Earth mode rewords the same engine for teams far from a clinic (for example a winter Antarctic station). Not tested in any real setting. |
 
 ## Tools and technology
@@ -43,7 +46,8 @@ Cost: $0 (free tiers, no paid APIs).
 
 | Data | Use | Status |
 | --- | --- | --- |
-| Crew vitals (heart rate, HRV, sleep, exercise, CO2, radiation, psych check-in) | All demo data, from a seeded simulator | **Simulated.** Real astronaut HR and HRV are not public. Every reading is marked `simulated: true`, and every screen says "Simulated data". |
+| Crew vitals (heart rate, HRV, sleep, exercise, CO2, radiation, psych check-in) | All demo data, from a seeded simulator | **Simulated.** Real astronaut HR and HRV are not public. Every reading is marked `source: 'simulated'`, and every screen says "Simulated data". |
+| Example wearable export (`samples/wearable-export-example.csv`) | Shows the CSV import: the same engine on a different data source | **Made up** for format illustration. Marked `source: 'imported'`; the phone badge says "IMPORTED DATA (example file)". |
 | ISS sleep statistics (mean 6.09 h; 1,294 of 2,951 nights under 6 h) | Calibrates the simulated sleep | Published: Barger et al. 2014 |
 | Cabin CO2 limit and ISS range (24 h average at or below 3 mmHg; 7-day average 1 to 9 mmHg) | Keeps simulated CO2 inside the published range | Published: NASA OCHMO technical brief OCHMO-TB-004 |
 | Other baselines (resting HR, HRV, exercise, radiation, check-in) | Simulator settings | Guesses, illustrative, expert review required |
@@ -76,6 +80,7 @@ Somacast is built around NASA's "Distance from Earth" hazard: when the link is g
 - All vitals are simulated; the engine has only been checked against its own simulator, never on real people or by clinicians.
 - Thresholds are illustrative and need expert review. The baseline is frozen after 28 days, with no re-baselining yet.
 - NASA DONKI data is not used yet.
+- No real wearable or device is connected; the CSV import has only been run on a made-up example file.
 - Android only; iOS is not built.
 - Not built: psych check-in input on the phone, a demo speed control, a sparkline on the phone, a cross-crew handoff inbox.
 - Earth mode changes words only; it keeps the same metrics and thresholds.

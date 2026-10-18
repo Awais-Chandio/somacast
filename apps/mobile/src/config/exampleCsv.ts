@@ -1,0 +1,39 @@
+// Copy of samples/wearable-export-example.csv, shipped inside the app bundle so the import
+// works without a file picker. exampleCsv.test.ts fails if the two ever differ.
+// EXAMPLE FILE: values made up for format illustration, not real crew data.
+export const EXAMPLE_CSV = `# EXAMPLE FILE, values made up for format illustration.
+# Not real crew data and not from any real device. One row per crew member per day.
+# Format: docs/real-mission.md. Units: restingHr bpm, hrv ms (rMSSD), sleepHours h,
+# exerciseMin min/day, cabinCo2 mmHg, radiationDose mSv/day, psychCheckin 1 to 5 (5 is best).
+date,crewId,restingHr,hrv,sleepHours,exerciseMin,cabinCo2,radiationDose,psychCheckin
+2027-03-01,EX1,60,64,6.6,118,2.1,0.46,5
+2027-03-02,EX1,59,55,5.9,133,2.5,0.44,4
+2027-03-03,EX1,61,56,6.2,125,2.2,0.46,4
+2027-03-04,EX1,58,55,6.7,123,2.2,0.47,4
+2027-03-05,EX1,60,54,6.5,122,2.1,0.47,4
+2027-03-06,EX1,60,58,7.1,112,2.2,0.54,4
+2027-03-07,EX1,61,66,5.8,40,2.1,0.47,5
+2027-03-08,EX1,59,58,6.4,116,2.3,0.5,4
+2027-03-09,EX1,61,57,6.7,118,1.7,0.54,4
+2027-03-10,EX1,58,57,6,127,1.7,0.52,3
+2027-03-11,EX1,58,58,6,131,1.9,0.53,4
+2027-03-12,EX1,57,55,6.6,120,2.2,0.55,4
+2027-03-13,EX1,62,68,6.2,108,2.2,0.49,3
+2027-03-14,EX1,58,66,6.5,45,1.9,0.44,4
+2027-03-15,EX1,62,65,5.9,129,1.9,0.55,3
+2027-03-16,EX1,61,55,6.5,109,2.2,0.47,4
+2027-03-17,EX1,61,64,6.7,126,2.1,0.56,4
+2027-03-18,EX1,61,59,5.8,126,2,0.48,4
+2027-03-19,EX1,57,64,6.7,122,1.9,0.45,5
+2027-03-20,EX1,59,54,6.3,118,1.7,0.45,3
+2027-03-21,EX1,60,61,6.2,47,2.4,0.54,4
+2027-03-22,EX1,60,57,6.4,127,2.4,0.5,3
+2027-03-23,EX1,61,62,6.4,107,2.1,0.49,3
+2027-03-24,EX1,58,53,6.5,128,2.3,0.5,3
+2027-03-25,EX1,60,63,6.1,131,2.1,0.51,4
+2027-03-26,EX1,61,56,6.1,110,2.3,0.44,4
+2027-03-27,EX1,58,57,6.1,113,1.8,0.53,4
+2027-03-28,EX1,59,62,4.8,53,2.1,0.53,3
+2027-03-29,EX1,61,55,4.7,123,2.5,0.48,3
+2027-03-30,EX1,60,56,4.7,114,1.8,0.46,3
+`;

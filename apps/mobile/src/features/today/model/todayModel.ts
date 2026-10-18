@@ -15,7 +15,7 @@ import {
   type Forecast,
   type MetricId,
   type Mode,
-  type SimulationResult,
+  type MissionData,
 } from '@somacast/core';
 
 // Model: everything the Today screen draws, already worded and formatted.
@@ -84,7 +84,7 @@ const severityWord: Record<Alert['severity'], string> = {
 };
 
 export function buildTodayView(
-  sim: SimulationResult,
+  sim: MissionData,
   crewId: string,
   day: number,
   mode: Mode = 'space', // Space / Earth wording; the numbers and states never change

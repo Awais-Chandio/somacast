@@ -8,7 +8,7 @@ import {
   type Handoff,
   type LogEntry,
   type Mode,
-  type SimulationResult,
+  type MissionData,
 } from '@somacast/core';
 import type { AosContact, GroundContact } from '../../link/model/linkPanel';
 
@@ -16,7 +16,7 @@ import type { AosContact, GroundContact } from '../../link/model/linkPanel';
 // One handoff per AOS: the id carries the AOS time, so a resend of the same batch is stored once,
 // while the next AOS sends a fresh handoff with its own blackout length.
 export function handoffEntry(
-  sim: SimulationResult,
+  sim: MissionData,
   scenario: string,
   crewId: string,
   day: number,
@@ -48,7 +48,9 @@ export function handoffFromEntry(entry: LogEntry): Handoff | null {
   return parsed.success ? parsed.data : null;
 }
 
-// What the "Handoff sent" card shows, already worded. The situation is re-worded by mode from the
+// What the "Handoff sent" card shows, already worded. logKey (the data on screen): a handoff made
+// from other data (another scenario, or the imported file) is not shown, so the card never sits
+// under a badge that names a different source. The situation is re-worded by mode from the
 // handoff's facts; the stored text stays in Space wording.
 export type HandoffCardView = {
   title: string; // "HANDOFF SENT"
@@ -68,8 +70,13 @@ export function utcTime(iso: string): string {
 export function handoffCardView(
   contact: GroundContact,
   mode: Mode = 'space',
+  logKey?: string,
 ): HandoffCardView | null {
-  const entry = contact.sent.find(e => handoffFromEntry(e));
+  const entry = contact.sent.find(
+    e =>
+      handoffFromEntry(e) &&
+      (logKey === undefined || e.payload.scenario === logKey),
+  );
   const h = entry && handoffFromEntry(entry);
   if (!entry || !h) return null;
   const state = entry.payload.state;
