@@ -31,6 +31,7 @@ Somacast is decision support, not a medical device. It never diagnoses. The flig
 | Android only | The phone app has been built and run on Android. iOS is not built (no Xcode or Apple developer account yet); the code is React Native, so it is planned from the same source. |
 | Not built | Psych check-in input on the phone (REQ-010), the "1 day = 5 s" demo speed control (REQ-016), a sparkline on the phone (REQ-011), a cap on alerts per day (REQ-013 caps actions, not alerts). See [verification.md](verification.md). |
 | Earth mode is wording only | Same metrics and thresholds as Space. Screens re-word engine sentences by mode, but the stored log stays in Space wording, and handoffs sent before their facts were stored show Space text in both modes. See [earth-mode.md](earth-mode.md). |
+| Blackout clock | The time the link went down is kept in memory only. If the app restarts during a blackout, the handoff's "out of contact" length counts from the reopen, so it can understate the real blackout. The log entries themselves are kept (SQLite). |
 | Device outbox | The phone outbox removes an entry once the ground acknowledges it. The append-only copy is the ground log (Supabase refuses update and delete). |
 
 ## Security and demo accounts

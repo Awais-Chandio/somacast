@@ -89,7 +89,7 @@ One row per requirement in [requirements.md](requirements.md). Checked on 2026-1
 | Core (Jest) | `npm run test:core` | 9 suites, 89 tests passed |
 | Mobile (Jest) | `npm run test:mobile` | 16 suites, 112 tests passed |
 | Web (Vitest) | `npm run test:web` | 2 files, 25 tests passed |
-| RLS (live Supabase) | `npm run rls-check` | 17/17 PASS (last run 2026-10-17, not re-run for this change) |
+| RLS (live Supabase) | `npm run rls-check` | 17/17 PASS |
 
 Requirements: 12 Pass, 11 Partial, 3 Not done, out of 26 (20 REQ + 6 NFR).
 

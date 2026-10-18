@@ -12,7 +12,7 @@ Body weather for crews beyond Earth: Somacast learns each crew member's own norm
 
 ## Summary
 
-On a deep-space mission the flight surgeon is on Earth and the link can drop for days. Somacast runs on the crew's phone without a network. It learns each crew member's own baseline for sleep, heart rate, HRV, exercise, mood, cabin CO2 and radiation, flags changes that persist, and forecasts the next 72 hours as Clear, Cloudy or Storm, always with the reason. During a blackout a black-box log keeps every entry. When the link returns, the backlog syncs with zero duplicates and the flight surgeon gets an SBAR handoff with evidence, then can send a note back. An Earth mode rewords the same engine for remote teams on Earth. All vitals are simulated. Somacast is decision support, not a medical device.
+On a crewed Mars mission the flight surgeon is on Earth. Messages take up to about 20 minutes each way, and near solar conjunction the link can be disrupted for two to three weeks. Somacast runs on the crew's phone without a network. It learns each crew member's own baseline for sleep, heart rate, HRV, exercise, mood, cabin CO2 and radiation, flags changes that persist, and forecasts the next 72 hours as Clear, Cloudy or Storm, always with the reason. During a blackout a black-box log keeps every entry. When the link returns, the backlog syncs with zero duplicates and the flight surgeon gets an SBAR handoff with evidence, then can send a note back. An Earth mode rewords the same engine for remote teams on Earth. All vitals are simulated. Somacast is decision support, not a medical device.
 
 ## How it addresses the challenge
 
@@ -48,6 +48,7 @@ Cost: $0 (free tiers, no paid APIs).
 | Cabin CO2 limit and ISS range (24 h average at or below 3 mmHg; 7-day average 1 to 9 mmHg) | Keeps simulated CO2 inside the published range | Published: NASA OCHMO technical brief OCHMO-TB-004 |
 | Other baselines (resting HR, HRV, exercise, radiation, check-in) | Simulator settings | Guesses, illustrative, expert review required |
 | NASA DONKI space-weather events | Planned for the solar storm scenario | **Not used yet.** The storm is an illustrative spike. |
+| Earth–Mars communication delay and disruption | Problem statement in the summary and the video | Published: McBrayer, Chai and Judd, "Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions", NASA Langley Research Center, ASCEND 2022, NTRS 20220013418 (https://ntrs.nasa.gov/citations/20220013418) |
 
 Crew members (Maya, Kenji, Amara, Luis) and the flight surgeon (Daniel) are fictional. Full list with links: [data-sources.md](data-sources.md).
 
@@ -55,7 +56,7 @@ Crew members (Maya, Kenji, Amara, Luis) and the flight surgeon (Daniel) are fict
 
 - **Claude (Anthropic), through Claude Code**, helped write code and documentation, including this draft. Awais reviewed, ran and tested everything.
 - Somacast itself uses no AI at runtime. All alerts, forecasts, suggestions and handoffs come from fixed rules; no LLM decides severity or writes clinical text.
-- To confirm before submitting: whether any AI-generated images, video or voice are used in the video or slides, and disclose them if so.
+- No AI-generated images, video or voice; narration recorded by Awais.
 
 ## Known limitations
 

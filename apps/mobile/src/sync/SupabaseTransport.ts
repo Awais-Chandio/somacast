@@ -36,12 +36,10 @@ export function createSupabaseTransport(
     // The LOS/AOS toggle simulates the blackout; real network errors surface below.
     if (!opts.linkUp()) throw new Error('LOS: no link');
     if (batch.length === 0) return { acked: [] };
-    const { error } = await client
-      .from(LOG_TABLE)
-      .upsert(batch.map(toLogRow), {
-        onConflict: 'key',
-        ignoreDuplicates: true,
-      });
+    const { error } = await client.from(LOG_TABLE).upsert(batch.map(toLogRow), {
+      onConflict: 'key',
+      ignoreDuplicates: true,
+    });
     if (error) throw new Error(`Ground refused batch: ${error.message}`);
     return { acked: batch.map(b => b.key) }; // only reached when the upsert succeeded
   };
