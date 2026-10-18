@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useMemo,
   useState,
@@ -7,9 +8,10 @@ import {
 } from 'react';
 import { Check } from 'lucide-react';
 import { copy, modes, type Copy, type Mode } from '@somacast/core';
+import { loadMode, saveMode } from './modeStorage';
 
 // Space / Earth wording for the console (REQ-019). Only words change; no data or rule reads the mode.
-// Not saved: a fresh page opens in Space.
+// Saved in this browser (localStorage): a fresh page opens in the last chosen mode, else Space.
 type CopyState = { mode: Mode; words: Copy; setMode: (m: Mode) => void };
 
 const CopyContext = createContext<CopyState>({
@@ -19,8 +21,15 @@ const CopyContext = createContext<CopyState>({
 });
 
 export function CopyProvider({ children }: { children: ReactNode }) {
-  const [mode, setMode] = useState<Mode>('space');
-  const value = useMemo(() => ({ mode, words: copy[mode], setMode }), [mode]);
+  const [mode, setModeState] = useState<Mode>(() => loadMode());
+  const setMode = useCallback((m: Mode) => {
+    setModeState(m);
+    saveMode(m);
+  }, []);
+  const value = useMemo(
+    () => ({ mode, words: copy[mode], setMode }),
+    [mode, setMode],
+  );
   return <CopyContext.Provider value={value}>{children}</CopyContext.Provider>;
 }
 

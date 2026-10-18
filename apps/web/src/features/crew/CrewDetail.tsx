@@ -1,7 +1,12 @@
 import { useCallback } from 'react';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { AlertTriangle, ArrowLeft, RefreshCw } from 'lucide-react';
-import { metricLabel, metrics } from '@somacast/core';
+import {
+  alertText,
+  forecastReasons,
+  metricLabel,
+  metrics,
+} from '@somacast/core';
 import {
   fetchIndex,
   fetchLatestHandoff,
@@ -55,9 +60,7 @@ async function loadCrew(client: SupabaseClient, crewId: string) {
     : [];
   return {
     handoff,
-    evidence: handoff
-      ? evidenceItems(handoff.handoff, logged, assessment?.alerts ?? [])
-      : [],
+    logged,
     summary: summarizeCrews(index)[0] ?? null,
     readings,
     assessment,
@@ -143,11 +146,14 @@ function CrewBody({
   onSend: (t: string) => Promise<Note>;
 }) {
   const { summary, assessment: a, sparks, readings } = data;
-  const { words } = useCopy();
+  const { words, mode } = useCopy();
   const alerting = new Set(a?.alerts.map(x => x.metric));
+  const evidence = data.handoff
+    ? evidenceItems(data.handoff.handoff, data.logged, a?.alerts ?? [], mode)
+    : [];
   return (
     <>
-      <HandoffPanel logged={data.handoff} evidence={data.evidence} />
+      <HandoffPanel logged={data.handoff} evidence={evidence} />
 
       <div className="hero">
         {a ? (
@@ -162,7 +168,7 @@ function CrewBody({
               </span>
             </div>
             <ul className="reasons">
-              {a.forecast.reasons.map((r, i) => (
+              {forecastReasons(a.forecast, a.alerts, mode).map((r, i) => (
                 <li key={i}>{r}</li>
               ))}
             </ul>
@@ -233,7 +239,7 @@ function CrewBody({
                     <dd>{al.days}</dd>
                   </div>
                 </dl>
-                <p>{al.reason}</p>
+                <p>{alertText(al, mode)}</p>
               </li>
             );
           })}

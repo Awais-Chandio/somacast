@@ -1,17 +1,20 @@
 import {
+  alertText,
   assess,
   capitalize,
   coachActions,
+  coachActionText,
   copy,
+  forecastReasons,
   indexByDay,
   metricIds,
   metricLabel,
   metrics,
   type Alert,
   type CoachAction,
-  type Copy,
   type Forecast,
   type MetricId,
+  type Mode,
   type SimulationResult,
 } from '@somacast/core';
 
@@ -84,8 +87,9 @@ export function buildTodayView(
   sim: SimulationResult,
   crewId: string,
   day: number,
-  words: Copy = copy.space, // Space / Earth labels; the numbers and states never change
+  mode: Mode = 'space', // Space / Earth wording; the numbers and states never change
 ): TodayView {
+  const words = copy[mode];
   const crewName = sim.crew.find(c => c.id === crewId)?.name ?? crewId;
   const today = indexByDay(sim.readings, crewId).get(day);
   const { alerts, forecast } = assess(sim.readings, crewId, day);
@@ -95,7 +99,7 @@ export function buildTodayView(
     dateLabel: `${capitalize(words.day)} ${day} · ${today?.date ?? 'no data'}`,
     state: forecast.state,
     confidence: forecast.confidence,
-    reasons: forecast.reasons,
+    reasons: forecastReasons(forecast, alerts, mode),
     alerts: alerts.map(a => {
       const spec = metrics[a.metric];
       return {
@@ -107,16 +111,19 @@ export function buildTodayView(
         daysText: `${a.days} ${a.days === 1 ? 'day' : 'days'} in a row`,
         severity: a.severity,
         severityWord: severityWord[a.severity],
-        reason: a.reason,
+        reason: alertText(a, mode),
       };
     }),
-    actions: coachActions(alerts, forecast).map(a => ({
-      id: a.id,
-      text: a.text,
-      fromText: `From: ${a.alertLabel}`,
-      whenText: a.when === 'today' ? 'Today' : 'Next 72 h',
-      label: a.label,
-    })),
+    actions: coachActions(alerts, forecast).map(a => {
+      const t = coachActionText(a.metric, mode);
+      return {
+        id: a.id,
+        text: t.text,
+        fromText: `From: ${t.alertLabel}`,
+        whenText: a.when === 'today' ? 'Today' : 'Next 72 h',
+        label: a.label,
+      };
+    }),
     latest: metricIds.map(metric => ({
       metric,
       label: metricLabel(metric, words),

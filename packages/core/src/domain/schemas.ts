@@ -66,6 +66,7 @@ export const ForecastSchema = z.object({
   state: z.enum(['clear', 'cloudy', 'storm']),
   confidence: z.enum(['normal', 'low']),
   reasons: z.array(z.string()),
+  trending: z.array(MetricIdSchema), // metrics projected past the alert line within 72 h (not yet alerting)
 });
 
 export const LogEntrySchema = z.object({
@@ -74,6 +75,27 @@ export const LogEntrySchema = z.object({
   timestamp: isoDateTime,
   kind: z.enum(['reading', 'alert', 'crew_action', 'link_state']),
   payload: z.record(z.string(), z.unknown()),
+});
+
+// The structured facts a handoff's text is written from, so a screen can word it in either mode
+// (copy/engineText.ts). The stored text stays in Space wording.
+export const HandoffFactsSchema = z.object({
+  crew: CrewSchema,
+  asOfDay: z.number().int().min(0),
+  state: ForecastSchema.shape.state,
+  confidence: ForecastSchema.shape.confidence,
+  alerts: z.array(AlertSchema), // this crew member's alerts, most urgent first
+  trending: z.array(MetricIdSchema),
+  actions: z.array(
+    z.object({ alertId: z.string().min(1), metric: MetricIdSchema }),
+  ),
+  blackout: z.object({ start: isoDateTime, end: isoDateTime }).nullable(),
+  heldEntries: z.number().int().min(0).optional(),
+  baseline: z.object({
+    days: z.number().int().min(0), // days the baseline was learned from
+    learningDays: z.number().int().min(1), // days needed before it is trusted
+    lastDay: z.number().int().min(0).nullable(), // last day it was learned from
+  }),
 });
 
 export const HandoffSchema = z.object({
@@ -86,6 +108,7 @@ export const HandoffSchema = z.object({
   recommendation: z.string(),
   evidence: z.array(z.string()), // alert ids
   disclaimer: z.string().min(1),
+  facts: HandoffFactsSchema.optional(), // absent on handoffs made before Earth-mode rewording
 });
 
 export const UplinkNoteSchema = z.object({
@@ -116,6 +139,7 @@ export type Scenario = z.infer<typeof ScenarioSchema>;
 export type Alert = z.infer<typeof AlertSchema>;
 export type Forecast = z.infer<typeof ForecastSchema>;
 export type LogEntry = z.infer<typeof LogEntrySchema>;
+export type HandoffFacts = z.infer<typeof HandoffFactsSchema>;
 export type Handoff = z.infer<typeof HandoffSchema>;
 export type UplinkNote = z.infer<typeof UplinkNoteSchema>;
 export type Profile = z.infer<typeof ProfileSchema>;

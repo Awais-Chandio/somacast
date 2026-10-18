@@ -9,7 +9,7 @@ Earth mode is a **wording switch**. It changes words and examples only. Threshol
 - **Phone:** Today screen, **WORDING** row, tap **Space** or **Earth**.
 - **Ground console:** the **Space / Earth** buttons in the header.
 
-The choice is per device and is not saved: the app and the console open in Space.
+The choice is saved per device: the phone keeps it in AsyncStorage and the console in the browser's localStorage, so each opens in the last chosen mode (Space the first time). If storage is blocked or fails, the app opens in Space and still works; the choice is just not remembered.
 
 ## What changes
 
@@ -24,6 +24,15 @@ All words live in one dictionary, `packages/core/src/copy/copy.ts`. A test (`cop
 | Cabin CO2 partial pressure | Indoor CO2 partial pressure |
 | mission day | day |
 | Body weather for crews beyond Earth | Body weather for teams far from a clinic |
+| CMO (in coach actions) | on-site medic |
+
+## Engine sentences
+
+Alert reasons, forecast reasons, coach actions and the SBAR handoff are written by the engine. The shared log stores them in Space wording, and that stored text never changes. Screens do not show the stored text: they write it again from the structured fields (metric, value, usual value, z, days, forecast state, trends, the handoff's facts) with the words for the current mode, in `packages/core/src/copy/engineText.ts`.
+
+- The engine writes the stored text with the same functions in Space wording, so in Space a screen shows exactly what is in the log (tested over every alert and forecast of 3 scenarios and 5 seeds).
+- In Earth mode only the words change: "Cabin CO2" becomes "Indoor CO2", "crew member" becomes "team member", "Out of contact (LOS)" becomes "Offline", "mission day" becomes "day", and coach actions name the on-site medic instead of the CMO. Every number, state and alert is the same.
+- The phone and the console can be in different modes and still read the same record.
 
 ## Three Earth settings
 
@@ -37,7 +46,7 @@ These are examples of where the idea could apply. Somacast has not been tested o
 
 ## What does not change (known gaps)
 
-- **Engine sentences keep the Space wording.** Alert reasons, forecast reasons ("this crew member's usual range"), coach actions and the SBAR handoff are written by the engine and stored in the shared log. One record is read by the phone and the console, which may be in different modes, so these texts are not reworded. A display-time rewording is future work.
+- **Older handoffs stay in Space wording.** A handoff sent before the handoff's facts were stored has only its text, so it shows that Space text in both modes.
 - **Same metrics.** Earth mode keeps all seven simulated metrics, including radiation dose, which matters little in most Earth settings. A real Earth profile would choose its own metrics and thresholds with clinical experts.
 - **Same simulated data.** Earth mode shows the same simulated crew, names and scenarios. All values are simulated.
 - **Decision support only.** In every mode Somacast is decision support, not a medical device. The remote doctor decides.

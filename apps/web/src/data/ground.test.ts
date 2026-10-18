@@ -326,6 +326,21 @@ describe('SBAR handoff (Kenji, blackout decline, day 75)', () => {
     );
   });
 
+  it('evidence in Earth wording: same alerts, re-worded from their fields', () => {
+    const space = evidenceItems(handoff, [], day75.alerts);
+    const earth = evidenceItems(handoff, [], day75.alerts, 'earth');
+    expect(space.map(i => i.reason)).toEqual(
+      handoff.evidence.map(id => day75.alerts.find(a => a.id === id)!.reason),
+    );
+    expect(earth.map(i => i.alertId)).toEqual(space.map(i => i.alertId));
+    const co2 = earth.find(i => i.alertId.includes('cabinCo2'))!;
+    expect(co2.label).toBe('Indoor CO2 partial pressure');
+    expect(co2.reason).toMatch(/^Indoor CO2 partial pressure \d/);
+    const relabel = (x: typeof space) =>
+      JSON.stringify(x).replaceAll('Indoor CO2', 'Cabin CO2');
+    expect(relabel(earth)).toBe(relabel(space));
+  });
+
   it('evidence not on the page falls back to the logged alert, then to the bare id', () => {
     const logged = parseAlertRows(day75.alerts.map(alertRow));
     expect(logged).toEqual(day75.alerts);

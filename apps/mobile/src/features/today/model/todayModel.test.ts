@@ -1,4 +1,4 @@
-import { copy, scenarios, simulate } from '@somacast/core';
+import { scenarios, simulate } from '@somacast/core';
 import { buildTodayView } from './todayModel';
 
 const base = { seed: 42, crewCount: 4, days: 90, startDate: '2027-01-01' };
@@ -56,9 +56,9 @@ describe('todayModel: buildTodayView', () => {
     expect(v.reasons.join(' ')).toMatch(/Low confidence/);
   });
 
-  it('Earth wording: indoor CO2 and "Day"; nothing else changes', () => {
+  it('Earth wording: indoor CO2, "Day", Earth coach text; same state and numbers', () => {
     const space = buildTodayView(blackout, 'C1', 75);
-    const earth = buildTodayView(blackout, 'C1', 75, copy.earth);
+    const earth = buildTodayView(blackout, 'C1', 75, 'earth');
     const co2 = (v: typeof space) =>
       v.latest.find(r => r.metric === 'cabinCo2')!.label;
     expect(co2(space)).toBe('Cabin CO2 partial pressure');
@@ -66,14 +66,25 @@ describe('todayModel: buildTodayView', () => {
     expect(earth.alerts.map(a => a.metricLabel)).toContain(
       'Indoor CO2 partial pressure',
     );
-    // Same state, same numbers: only the CO2 label differs.
+    // Alert reasons are re-worded from the alert's fields, not copied from the log.
+    expect(earth.alerts.map(a => a.reason).join(' ')).toMatch(
+      /^Indoor CO2 partial pressure \d/,
+    );
+    expect(earth.actions.map(a => a.text)).toContain(
+      'Tell the team and the remote doctor about the CO2 reading; follow the site procedure for indoor air.',
+    );
+    expect(earth.actions.map(a => a.fromText)).toContain(
+      'From: Indoor CO2 partial pressure alert',
+    );
+    // Same state, same numbers: only words differ.
     expect(earth.dateLabel).toBe(space.dateLabel.replace('Mission day', 'Day'));
     const relabel = (v: typeof space) =>
-      JSON.stringify({ ...v, dateLabel: '' }).replaceAll(
+      JSON.stringify({ ...v, dateLabel: '', actions: [] }).replaceAll(
         'Indoor CO2',
         'Cabin CO2',
       );
     expect(relabel(earth)).toBe(relabel(space));
+    expect(earth.actions.map(a => a.id)).toEqual(space.actions.map(a => a.id));
   });
 
   it('missing day: readings show "-" instead of a number', () => {

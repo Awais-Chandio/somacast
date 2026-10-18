@@ -1,5 +1,6 @@
 import { metricIds, metrics, type MetricId } from '../domain/metrics';
 import type { Alert, DailyReading } from '../domain/schemas';
+import { alertText } from '../copy/engineText';
 import {
   badDirection,
   thresholds as defaults,
@@ -16,10 +17,6 @@ import {
 // Positive "badness": how far past baseline in the bad direction.
 function badZ(metric: MetricId, z: number): number {
   return badDirection[metric] === 'high' ? z : -z;
-}
-
-function fmt(n: number): string {
-  return Number.isInteger(n) ? String(n) : n.toFixed(1);
 }
 
 // Anchored baseline: learned from the first baselineWindow days (never from the days being checked), then frozen.
@@ -69,9 +66,7 @@ export function detectAnomalies(
 
     const value = today[metric];
     const z = zScore(value, baseline);
-    const spec = metrics[metric];
-    const word = badDirection[metric] === 'high' ? 'above' : 'below';
-    alerts.push({
+    const fields = {
       id: `${crewId}-${metric}-${today.date}`,
       crewId,
       metric,
@@ -79,10 +74,13 @@ export function detectAnomalies(
       baseline: Math.round(baseline.mean * 100) / 100,
       zscore: Math.round(z * 100) / 100,
       days: streak,
-      reason: `${spec.label} ${fmt(value)} ${spec.unit} is ${word} the usual ${fmt(baseline.mean)} ${spec.unit} for ${streak} days in a row (z ${z.toFixed(1)}).`,
-      severity: Math.abs(z) >= t.zHigh ? 'high' : 'medium',
+      reason: '',
+      severity:
+        Math.abs(z) >= t.zHigh ? ('high' as const) : ('medium' as const),
       createdAt: `${today.date}T12:00:00Z`,
-    });
+    };
+    // The stored reason is written from the stored fields, so a screen can re-word it exactly.
+    alerts.push({ ...fields, reason: alertText(fields) });
   }
   return alerts;
 }

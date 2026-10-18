@@ -1,4 +1,5 @@
 import { AlertTriangle, ArrowDown, FileText } from 'lucide-react';
+import { renderHandoff } from '@somacast/core';
 import {
   alertDomId,
   type EvidenceItem,
@@ -25,10 +26,10 @@ function showAlert(alertId: string) {
 
 type Props = { logged: LoggedHandoff | null; evidence: EvidenceItem[] };
 
-// The newest SBAR handoff from the crew, at the top of the crew page. Text is plain text, as the
-// phone's rules wrote it; React escapes it.
+// The newest SBAR handoff from the crew, at the top of the crew page. Text is plain text, written by
+// the phone's rules and re-worded by mode from the handoff's facts; React escapes it.
 export function HandoffPanel({ logged, evidence }: Props) {
-  const { words } = useCopy();
+  const { words, mode } = useCopy();
   if (!logged)
     return (
       <section className="handoff" aria-labelledby="handoff-title">
@@ -43,6 +44,7 @@ export function HandoffPanel({ logged, evidence }: Props) {
     );
 
   const h = logged.handoff;
+  const text = renderHandoff(h, mode);
   return (
     <section className="handoff" aria-labelledby="handoff-title">
       <div className="handoff-head">
@@ -65,7 +67,7 @@ export function HandoffPanel({ logged, evidence }: Props) {
               </span>
               {name}
             </dt>
-            <dd>{h[field]}</dd>
+            <dd>{text[field]}</dd>
           </div>
         ))}
       </dl>

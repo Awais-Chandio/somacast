@@ -41,7 +41,6 @@ export {
   HANDOFF_DISCLAIMER,
   GROUND_REVIEW,
   buildHandoff,
-  formatDuration,
   type HandoffContext,
 } from './coach/handoff';
 
@@ -60,15 +59,28 @@ export {
   type FlushResult,
 } from './sync/outbox';
 
-// copy: Space / Earth wording (Earth mode changes words only, never logic)
+// copy: Space / Earth wording (Earth mode changes words only, never logic), and engine sentences
+// written from structured fields in either wording
 export {
   modes,
   copy,
+  coachText,
   metricLabel,
   capitalize,
+  isMode,
   type Mode,
   type Copy,
 } from './copy/copy';
+export {
+  alertText,
+  forecastReasons,
+  coachActionText,
+  handoffText,
+  renderHandoff,
+  formatDuration,
+  type ForecastFacts,
+  type HandoffText,
+} from './copy/engineText';
 
 // design: brand tokens shared by mobile and web
 export * from './design/tokens';

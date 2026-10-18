@@ -68,7 +68,7 @@ One row per requirement in [requirements.md](requirements.md). Checked on 2026-1
 | --- | --- | --- | --- |
 | REQ-017 | Web console with crew status and a handoff inbox | ground › "one card per crew, counts every row, keeps the newest arrival, hides ZZ- crews"; "matches core assess() on the original simulation, as of the newest synced day"; "reads the handoff the phone sent". Manual demo: `npm run web`, sign in as Daniel, overview cards, open Kenji | Partial: the console shows the latest handoff per crew; there is no inbox list across crews |
 | REQ-018 | Surgeon's uplink note reaches the device at the next link | notes › "AOS on Supabase: fetches and shows each note with author and time"; "every new AOS fetches again"; "a failed fetch keeps the notes already shown and says why"; rls › Daniel / "insert uplink note for ZZ-TEST", Probe / "reads the uplink note for its crew", Maya / "reads no ZZ-TEST uplink notes" | Pass |
-| REQ-019 | Earth (remote clinic) profile by config only | copy › all 6 tests, including "both modes have exactly the same keys" and "Earth wording has no space jargon"; app › "Earth wording: Offline / team member / indoor CO2, same forecast"; today › "Earth wording: indoor CO2 and \"Day\"; nothing else changes"; account › "Earth wording: team and remote doctor". See [earth-mode.md](earth-mode.md) | Partial: words only; engine sentences (alert reasons, SBAR, coach actions) keep the Space wording; same metrics and thresholds |
+| REQ-019 | Earth (remote clinic) profile by config only | copy › all 6 tests, including "both modes have exactly the same keys" and "Earth wording has no space jargon"; app › "Earth wording: Offline / team member / indoor CO2, same forecast"; today › "Earth wording: indoor CO2, \"Day\", Earth coach text; same state and numbers"; account › "Earth wording: team and remote doctor"; engineText › "same alert, Space vs Earth: only the words change", "Space wording of every alert and forecast is exactly the stored text", "Earth: offline wording, indoor CO2, remote doctor, no space jargon"; handoff › "card view in Earth wording"; ground › "evidence in Earth wording"; copy provider › "next start: opens in the saved mode"; mode storage › "blocked or missing storage never throws". See [earth-mode.md](earth-mode.md) | Partial: words only (engine sentences are re-worded on screen; the stored log stays in Space wording); same metrics and thresholds |
 | REQ-020 | Optional LLM wording that never changes severity (default off) | None. No LLM code exists; `ANTHROPIC_API_KEY` is unset | Not done (by choice) |
 
 ## Non-functional
@@ -82,14 +82,14 @@ One row per requirement in [requirements.md](requirements.md). Checked on 2026-1
 | NFR-005 | One crew member can never read another's data (server side) | rls › all 17 rows, e.g. Maya / "read ZZ-TEST rows returns 0", Maya / "profiles shows only her own row", Maya / "insert ZZ-TEST row is refused", anon / "logged-out read of log_entries gets nothing". 17/17 PASS on 2026-10-17 | Pass |
 | NFR-006 | Cost stays $0; a fresh clone runs in 3 commands | Inspection: Supabase free tier, no paid API, no LLM key; README "How to verify" | Partial: never tried on a fresh clone; installing core, mobile and web is 3 commands before the run command |
 
-## Totals on 2026-10-17
+## Totals on 2026-10-18
 
 | Suite | Command | Result |
 | --- | --- | --- |
-| Core (Jest) | `npm run test:core` | 8 suites, 81 tests passed |
-| Mobile (Jest) | `npm run test:mobile` | 15 suites, 107 tests passed |
-| Web (Vitest) | `npm run test:web` | 1 file, 21 tests passed |
-| RLS (live Supabase) | `npm run rls-check` | 17/17 PASS |
+| Core (Jest) | `npm run test:core` | 9 suites, 89 tests passed |
+| Mobile (Jest) | `npm run test:mobile` | 16 suites, 112 tests passed |
+| Web (Vitest) | `npm run test:web` | 2 files, 25 tests passed |
+| RLS (live Supabase) | `npm run rls-check` | 17/17 PASS (last run 2026-10-17, not re-run for this change) |
 
 Requirements: 12 Pass, 11 Partial, 3 Not done, out of 26 (20 REQ + 6 NFR).
 
@@ -103,6 +103,6 @@ Requirements: 12 Pass, 11 Partial, 3 Not done, out of 26 (20 REQ + 6 NFR).
 6. **REQ-015** fetch real DONKI SEP events and date the solar storm scenario from one.
 7. **REQ-002** show the word "learning" on the phone while the baseline is still learning.
 8. **REQ-006 / REQ-007 / NFR-003** record the airplane-mode run and a force-quit during sync on a real Android phone (manual, screenshots in `docs/screenshots/`).
-9. **REQ-019** reword engine sentences for Earth mode at display time.
+9. **REQ-019** an Earth profile with its own metrics and thresholds, chosen with clinical experts.
 10. **NFR-006** a fresh-clone check (clone, install, test) on a clean machine or CI.
 11. **CI** runs only the core suite; mobile and web tests run locally.

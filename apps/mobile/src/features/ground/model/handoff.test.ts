@@ -69,6 +69,17 @@ describe('handoffEntry (Kenji, blackout decline, day 75)', () => {
     expect(v.disclaimer).toBe('Decision support only, not a medical device.');
   });
 
+  it('card view in Earth wording: re-worded from the facts, stored text unchanged', () => {
+    const sent = { ...contact, ground: 'supabase' as const, sent: [entry] };
+    const space = handoffCardView(sent, 'space')!;
+    const earth = handoffCardView(sent, 'earth')!;
+    expect(space.situation).toBe(entry.payload.situation); // the stored text
+    expect(space.situation).toMatch(/mission day 75/);
+    expect(earth.situation).toMatch(/^Kenji \(C2\), day 75: Storm forecast/);
+    expect(earth.evidenceText).toMatch(/Remote doctor review requested\.$/);
+    expect(entry.payload.situation).toBe(space.situation);
+  });
+
   it('card view: nothing when no handoff was sent', () => {
     expect(handoffCardView({ ...contact, ground: 'demo', sent: [] })).toBe(
       null,

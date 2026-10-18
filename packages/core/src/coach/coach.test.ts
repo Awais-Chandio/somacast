@@ -21,6 +21,7 @@ const forecast = (state: Forecast['state'], crewId = 'C2'): Forecast => ({
   state,
   confidence: 'normal',
   reasons: [],
+  trending: [],
 });
 
 const alert = (

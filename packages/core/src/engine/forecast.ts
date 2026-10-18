@@ -7,6 +7,7 @@ import {
 } from './thresholds';
 import { indexByDay, zScore } from './baseline';
 import { baselineFor, detectAnomalies } from './anomaly';
+import { forecastReasons } from '../copy/engineText';
 
 // Least-squares slope and intercept for points (x, y).
 function fitLine(
@@ -50,7 +51,6 @@ export function assess(
 
   const personal = alerts.filter(a => metrics[a.metric].scope === 'personal');
   const cabin = alerts.filter(a => metrics[a.metric].scope === 'environment');
-  const reasons: string[] = alerts.map(a => a.reason);
 
   // Trend projection for metrics that are not already alerting.
   const trending: MetricId[] = [];
@@ -73,10 +73,6 @@ export function assess(
     const badNow = last3.reduce((a, b) => a + b, 0) / Math.max(1, last3.length);
     if (badProjected > t.zAlert && badNow > t.zTrendNow) {
       trending.push(metric);
-      const spec = metrics[metric];
-      reasons.push(
-        `${spec.label} is trending ${badDirection[metric] === 'high' ? 'up' : 'down'} and may pass the alert line within 72 h.`,
-      );
     }
   }
 
@@ -92,12 +88,7 @@ export function assess(
   const historyDays = [...index.keys()].filter(d => d <= asOfDay).length;
   const lowConfidence =
     historyDays < t.learningDays || missing > t.maxMissingLast7;
-  if (lowConfidence)
-    reasons.push(
-      'Low confidence: not enough recent data to trust the baseline.',
-    );
-  if (state === 'clear' && !lowConfidence)
-    reasons.push("All metrics are close to this crew member's usual range.");
+  const confidence: Forecast['confidence'] = lowConfidence ? 'low' : 'normal';
 
   return {
     alerts,
@@ -106,8 +97,10 @@ export function assess(
       generatedAt: `${date}T12:00:00Z`,
       horizonHours: 72,
       state,
-      confidence: lowConfidence ? 'low' : 'normal',
-      reasons,
+      confidence,
+      // Stored in Space wording; screens re-word from state, confidence, trending and the alerts.
+      reasons: forecastReasons({ state, confidence, trending }, alerts),
+      trending,
     },
   };
 }

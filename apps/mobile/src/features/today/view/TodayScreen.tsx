@@ -78,9 +78,9 @@ export function TodayScreen({ account, client, onAccountAction }: Props) {
     const e = handoffEntry(c.sim, c.scenario, c.crewId, c.day, contact);
     return e ? [e] : [];
   };
-  const handoff = link.contact ? handoffCardView(link.contact) : null;
+  const { words, mode } = useCopy();
+  const handoff = link.contact ? handoffCardView(link.contact, mode) : null;
   const notes = useGroundNotes(client, crewId, link.contact);
-  const { words } = useCopy();
 
   return (
     <SafeAreaView style={styles.screen} edges={['top', 'left', 'right']}>

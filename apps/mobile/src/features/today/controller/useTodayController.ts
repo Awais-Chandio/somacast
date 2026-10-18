@@ -41,10 +41,10 @@ export function useTodayController(
   );
 
   const sim = useMemo(() => simulateMission(scenario), [scenario]);
-  const { words } = useCopy();
+  const { mode } = useCopy();
   const view = useMemo(
-    () => buildTodayView(sim, crewId, day, words),
-    [sim, crewId, day, words],
+    () => buildTodayView(sim, crewId, day, mode),
+    [sim, crewId, day, mode],
   );
   const logEntries = useMemo(
     () => blackBoxEntries(sim, scenario, crewId, day),

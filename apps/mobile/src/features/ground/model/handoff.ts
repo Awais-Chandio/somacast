@@ -1,10 +1,13 @@
 import {
   assess,
   buildHandoff,
+  copy,
   HandoffSchema,
+  renderHandoff,
   weather,
   type Handoff,
   type LogEntry,
+  type Mode,
   type SimulationResult,
 } from '@somacast/core';
 import type { AosContact, GroundContact } from '../../link/model/linkPanel';
@@ -45,7 +48,8 @@ export function handoffFromEntry(entry: LogEntry): Handoff | null {
   return parsed.success ? parsed.data : null;
 }
 
-// What the "Handoff sent" card shows, already worded.
+// What the "Handoff sent" card shows, already worded. The situation is re-worded by mode from the
+// handoff's facts; the stored text stays in Space wording.
 export type HandoffCardView = {
   title: string; // "HANDOFF SENT"
   sentText: string; // "Sent to Supabase at 2026-10-17 14:05 UTC"
@@ -63,6 +67,7 @@ export function utcTime(iso: string): string {
 
 export function handoffCardView(
   contact: GroundContact,
+  mode: Mode = 'space',
 ): HandoffCardView | null {
   const entry = contact.sent.find(e => handoffFromEntry(e));
   const h = entry && handoffFromEntry(entry);
@@ -78,10 +83,10 @@ export function handoffCardView(
       state === 'clear' || state === 'cloudy' || state === 'storm'
         ? weather[state].label
         : null,
-    situation: h.situation,
+    situation: renderHandoff(h, mode).situation,
     evidenceText: `${n === 0 ? 'No' : n} ${
       n === 1 ? 'alert' : 'alerts'
-    } attached as evidence. Ground review requested.`,
+    } attached as evidence. ${copy[mode].reviewRequested}`,
     disclaimer: h.disclaimer,
   };
 }

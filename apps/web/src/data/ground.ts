@@ -1,10 +1,13 @@
 import {
+  alertText,
   AlertSchema,
   assess,
   baselineFor,
+  copy,
   HandoffSchema,
   indexByDay,
   metricIds,
+  metricLabel,
   metrics,
   ReadingSchema,
   simulatedCrewName,
@@ -14,6 +17,7 @@ import {
   type Forecast,
   type Handoff,
   type MetricId,
+  type Mode,
 } from '@somacast/core';
 
 // Pure data shaping for the ground console: Supabase rows in, what the screens show out.
@@ -252,8 +256,8 @@ export function losTimeline(
 
 // ------------------------------------------------------------------ SBAR handoff
 
-// The handoff the phone sent at AOS, as the surgeon reads it. The text is shown as written by the
-// phone's rules (plain text); the console adds nothing to it.
+// The handoff the phone sent at AOS, as the surgeon reads it. The text is written by the phone's
+// rules (plain text); the console only re-words it by mode from the handoff's facts.
 export type LoggedHandoff = {
   handoff: Handoff;
   receivedAt: string;
@@ -299,19 +303,21 @@ export type EvidenceItem = {
 };
 
 // One item per evidence id, in the handoff's order. The alert list on the page wins (same id =
-// same metric and day); otherwise the alert as the phone logged it.
+// same metric and day); otherwise the alert as the phone logged it. Label and reason are worded
+// by mode from the alert's fields.
 export function evidenceItems(
   handoff: Handoff,
   logged: Alert[],
   current: Alert[],
+  mode: Mode = 'space',
 ): EvidenceItem[] {
   return handoff.evidence.map(id => {
     const onPage = current.find(a => a.id === id);
     const a = onPage ?? logged.find(x => x.id === id);
     return {
       alertId: id,
-      label: a ? metrics[a.metric].label : id,
-      reason: a?.reason ?? null,
+      label: a ? metricLabel(a.metric, copy[mode]) : id,
+      reason: a ? alertText(a, mode) : null,
       severity: a?.severity ?? null,
       onPage: Boolean(onPage),
     };
