@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import React from 'react';
 import ReactTestRenderer from 'react-test-renderer';
 import {
@@ -12,6 +13,11 @@ import {
   type LinkPanelController,
   type RemoteGround,
 } from './useLinkPanel';
+import * as fs from 'node:fs';
+import * as os from 'node:os';
+import * as path from 'node:path';
+import { openOutboxStore } from '../../../sync/SqliteOutboxStore';
+import { recordHistory } from '../../../sync/blackBox';
 import { forgetGroundChoice } from '../model/groundChoice';
 import type { AosContact } from '../model/linkPanel';
 
@@ -331,6 +337,125 @@ describe('useLinkPanel', () => {
         ['2026-10-17T14:10:00.000Z', '2026-10-17T14:15:00.000Z'],
       ]);
       expect(get().contact?.aosAt).toBe('2026-10-17T14:15:00.000Z');
+    });
+
+    // The app is killed and reopened: a new hook on a new store over the same SQLite file.
+    async function restartable(dir: string, startAt: string) {
+      const { remote, rows } = fakeRemote();
+      const seen: AosContact[] = [];
+      const open = async (at: string) => {
+        const store = openOutboxStore(dir, 'u-kenji');
+        const ref: { current: LinkPanelController | null } = { current: null };
+        const now = stepClock(Date.parse(at));
+        let r!: ReactTestRenderer.ReactTestRenderer;
+        function Probe() {
+          ref.current = useLinkPanel(store, {
+            remote,
+            now,
+            atAos: c => {
+              seen.push(c);
+              return [];
+            },
+          });
+          return null;
+        }
+        await ReactTestRenderer.act(() => {
+          r = ReactTestRenderer.create(<Probe />);
+        });
+        return {
+          store,
+          get: () => ref.current as LinkPanelController,
+          kill: () => ReactTestRenderer.act(() => r.unmount()),
+        };
+      };
+      return { first: await open(startAt), open, seen, rows };
+    }
+
+    const tmp = () => fs.mkdtempSync(path.join(os.tmpdir(), 'somacast-link-'));
+
+    it('LOS, restart, AOS: the handoff counts the blackout from the real LOS start', async () => {
+      const dir = tmp();
+      try {
+        const { first, open, seen } = await restartable(
+          dir,
+          '2026-10-18T11:43:00.000Z',
+        );
+        await first.kill(); // killed in LOS
+        const app = await open('2026-10-18T11:50:00.000Z'); // reopened 7 min later
+        await act(() => app.get().toggleLink()); // AOS at 11:50
+        expect(seen).toEqual([
+          {
+            losSince: '2026-10-18T11:43:00.000Z',
+            aosAt: '2026-10-18T11:50:00.000Z',
+            held: 0,
+          },
+        ]);
+        expect(app.store.getLosSince()).toBe(null); // the link is up
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('killed while the link is up: the reopen starts a new LOS', async () => {
+      const dir = tmp();
+      try {
+        const { first, open, seen } = await restartable(
+          dir,
+          '2026-10-18T11:43:00.000Z',
+        );
+        await act(() => first.get().toggleLink()); // AOS at 11:43
+        await first.kill();
+        const app = await open('2026-10-18T12:00:00.000Z');
+        await act(() => app.get().toggleLink()); // AOS at 12:00
+        expect(seen[1]!.losSince).toBe('2026-10-18T12:00:00.000Z');
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('after a sync to Supabase and a restart, the requeued history leaves 0 waiting', async () => {
+      const dir = tmp();
+      try {
+        const history = Array.from({ length: 97 }, (_, i) => entry(`h${i}`));
+        const { first, open, rows } = await restartable(
+          dir,
+          '2026-10-18T11:43:00.000Z',
+        );
+        recordHistory(first.store, history);
+        await act(async () => first.get().refresh());
+        expect(first.get().outbox.total).toBe(97);
+        await act(() => first.get().toggleLink()); // AOS: everything home
+        expect(rows.size).toBe(97);
+        await first.kill();
+
+        const app = await open('2026-10-18T11:50:00.000Z');
+        expect(recordHistory(app.store, history)).toBe(0); // the Today screen records it again
+        await act(async () => app.get().refresh());
+        expect(app.get().outbox.total).toBe(0);
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
+    });
+
+    it('a demo reset restarts the blackout clock and queues the history again', async () => {
+      const dir = tmp();
+      try {
+        const history = [entry('h0'), entry('h1')];
+        const { first, seen } = await restartable(
+          dir,
+          '2026-10-18T11:43:00.000Z',
+        );
+        recordHistory(first.store, history);
+        // The step clock moves 5 min per reading: opened 11:43.
+        await act(() => first.get().toggleLink()); // AOS 11:48, synced
+        await act(() => first.get().toggleLink()); // LOS 11:53
+        await act(async () => first.get().resetDemo()); // reset at 11:58
+        expect(recordHistory(first.store, history)).toBe(2);
+        await act(() => first.get().toggleLink()); // AOS 12:03
+        expect(seen.at(-1)!.losSince).toBe('2026-10-18T11:58:00.000Z');
+      } finally {
+        fs.rmSync(dir, { recursive: true, force: true });
+      }
     });
 
     it('ground refuses the backlog: no handoff is made, no contact', async () => {

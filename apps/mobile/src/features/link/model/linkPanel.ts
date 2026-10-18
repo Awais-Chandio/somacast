@@ -35,7 +35,28 @@ export type LocalOutbox = OutboxStore & {
   batch?: (fn: () => void) => void;
   countKeysLike?: (pattern: string) => number;
   clear?: () => void;
+  // Durable stores (SQLite) also remember what the real ground acknowledged, and when the link
+  // went down, so both survive an app restart.
+  markSynced?: (keys: string[]) => void;
+  getLosSince?: () => string | null;
+  setLosSince?: (iso: string | null) => void;
 };
+
+// The outbox as the sync sees it when the ground is durable (Supabase): every acknowledged key is
+// also remembered, so re-recorded history never queues it again. The demo ground starts empty on
+// each launch, so its acks are not remembered.
+export function rememberingSynced(store: LocalOutbox): OutboxStore {
+  const markSynced = store.markSynced?.bind(store);
+  if (!markSynced) return store;
+  return {
+    add: item => store.add(item),
+    has: key => store.has(key),
+    pending: limit => store.pending(limit),
+    markSent: keys => markSynced(keys),
+    bumpAttempts: keys => store.bumpAttempts(keys),
+    pendingCount: () => store.pendingCount(),
+  };
+}
 
 // The in-memory demo ground (MockGroundStore) offers this for the duplicate check.
 export type GroundView = { size(): number; keys(): string[] };

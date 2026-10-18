@@ -13,6 +13,7 @@ import {
   demoGroundCheck,
   fillOutbox,
   outboxBreakdown,
+  rememberingSynced,
   syncOutbox,
   syncSucceeded,
   type AosContact,
@@ -61,9 +62,14 @@ export function useLinkPanel(
   const linkRef = useRef<Link>('LOS');
   const nowRef = useRef(opts.now ?? systemNow);
   nowRef.current = opts.now ?? systemNow;
+  // When the link went down. A durable store keeps it, so after a restart in LOS the next
+  // handoff still counts the whole blackout, not just the time since the app reopened.
   const losSince = useRef<string | null>(null);
-  if (losSince.current === null)
-    losSince.current = nowRef.current().toISOString();
+  if (losSince.current === null) {
+    const saved = store.getLosSince?.() ?? null;
+    losSince.current = saved ?? nowRef.current().toISOString();
+    if (!saved) store.setLosSince?.(losSince.current);
+  }
   const atAosRef = useRef(opts.atAos);
   atAosRef.current = opts.atAos;
   const [contact, setContact] = useState<GroundContact | null>(null);
@@ -98,7 +104,7 @@ export function useLinkPanel(
     const real = groundRef.current === 'supabase' && remote;
     try {
       return await syncOutbox(
-        store,
+        real ? rememberingSynced(store) : store,
         real
           ? remote.transport(linkUp)
           : mockTransport(ground.current, { ...LINK_FAULTS, linkUp, random }),
@@ -124,9 +130,11 @@ export function useLinkPanel(
     setLink(next);
     if (next === 'LOS') {
       losSince.current = nowRef.current().toISOString();
+      store.setLosSince?.(losSince.current);
       return;
     }
     const aosAt = nowRef.current().toISOString();
+    store.setLosSince?.(null); // the link is up; a restart from here starts a new LOS
     const aos: AosContact = {
       losSince: losSince.current ?? aosAt,
       aosAt,
@@ -184,6 +192,8 @@ export function useLinkPanel(
   const resetDemo = useCallback(() => {
     if (linkRef.current !== 'LOS' || fillingRef.current) return;
     clearOutbox(store);
+    losSince.current = nowRef.current().toISOString(); // the demo's blackout starts again
+    store.setLosSince?.(losSince.current);
     ground.current = new MockGroundStore();
     setStatus({ phase: 'idle' });
     setContact(null);

@@ -101,6 +101,58 @@ describe('SqliteOutboxStore', () => {
     }
   });
 
+  it('synced keys survive a restart and are never queued again; plain markSent forgets them', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'somacast-outbox-'));
+    try {
+      const before = openOutboxStore(dir, 'u-kenji');
+      const es = entries(1200); // more than one chunk of keys
+      for (const e of es) enqueue(before, e);
+      before.markSynced(before.pending(1200).map(i => i.key));
+      expect(before.pendingCount()).toBe(0);
+      expect(before.syncedCount()).toBe(1200);
+
+      const after = openOutboxStore(dir, 'u-kenji'); // app killed and reopened
+      after.batch(() => es.forEach(e => enqueue(after, e))); // history recorded again
+      expect(after.pendingCount()).toBe(0);
+      enqueue(after, entries(1, 'new-')[0]!); // a new entry still goes in
+      expect(after.pendingCount()).toBe(1);
+
+      after.markSent(after.pending(1).map(i => i.key)); // demo ground: not remembered
+      enqueue(after, entries(1, 'new-')[0]!);
+      expect(after.pendingCount()).toBe(1);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('demo reset (clear) forgets the synced keys, so the history is queued again', () => {
+    const store = openOutboxStore();
+    const es = entries(3);
+    for (const e of es) enqueue(store, e);
+    store.markSynced(store.pending(3).map(i => i.key));
+    store.clear();
+    for (const e of es) enqueue(store, e);
+    expect(store.pendingCount()).toBe(3);
+    expect(store.syncedCount()).toBe(0);
+  });
+
+  it('LOS clock: survives a restart, null clears it, each account has its own', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'somacast-outbox-'));
+    try {
+      const kenji = openOutboxStore(dir, 'u-kenji');
+      expect(kenji.getLosSince()).toBe(null);
+      kenji.setLosSince('2026-10-18T11:43:00.000Z');
+      expect(openOutboxStore(dir, 'u-kenji').getLosSince()).toBe(
+        '2026-10-18T11:43:00.000Z',
+      );
+      expect(openOutboxStore(dir, 'u-maya').getLosSince()).toBe(null);
+      kenji.setLosSince(null);
+      expect(openOutboxStore(dir, 'u-kenji').getLosSince()).toBe(null);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
   it('each account has its own outbox file; no owner = the offline demo file', () => {
     expect(outboxDbName()).toBe('somacast-outbox.db');
     expect(outboxDbName('u-1')).toBe('somacast-outbox-u-1.db');

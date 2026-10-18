@@ -3,6 +3,10 @@ import type { LogEntry, OutboxItem, OutboxStore } from '@somacast/core';
 
 // The phone's black-box outbox (REQ-007): same shape as MemoryOutboxStore in @somacast/core,
 // but written to a SQLite file, so the backlog survives an app restart or a crash.
+// The same file also keeps two small things that must survive a restart:
+// - synced: keys the Supabase ground has acknowledged, so re-recording the history never queues
+//   them again (the ground would ignore them, but the outbox would read "97 waiting" for nothing);
+// - link_clock: when the link went down, so a handoff after a restart counts the whole blackout.
 // executeSync blocks the JS thread, so callers keep each call small (batches of 200-500).
 
 const CHUNK = 500; // keys per DELETE / UPDATE, well under SQLite's bound-parameter limit
@@ -22,12 +26,27 @@ export class SqliteOutboxStore implements OutboxStore {
         created_at INTEGER NOT NULL
       )`,
     );
+    db.executeSync('CREATE TABLE IF NOT EXISTS synced (key TEXT PRIMARY KEY)');
+    db.executeSync(
+      `CREATE TABLE IF NOT EXISTS link_clock (
+        id INTEGER PRIMARY KEY CHECK (id = 1),
+        los_since TEXT
+      )`,
+    );
   }
 
+  // A key the ground already acknowledged (synced) is not queued again.
   add(item: OutboxItem): void {
     this.db.executeSync(
-      'INSERT OR IGNORE INTO outbox (key, entry, attempts, created_at) VALUES (?, ?, ?, ?)',
-      [item.key, JSON.stringify(item.entry), item.attempts, Date.now()],
+      `INSERT OR IGNORE INTO outbox (key, entry, attempts, created_at)
+       SELECT ?, ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM synced WHERE key = ?)`,
+      [
+        item.key,
+        JSON.stringify(item.entry),
+        item.attempts,
+        Date.now(),
+        item.key,
+      ],
     );
   }
 
@@ -55,6 +74,39 @@ export class SqliteOutboxStore implements OutboxStore {
     this.inChunks(keys, marks => `DELETE FROM outbox WHERE key IN (${marks})`);
   }
 
+  // markSent for a durable ground (Supabase): the keys also go to `synced`, in one transaction.
+  markSynced(keys: string[]): void {
+    this.batch(() => {
+      this.inChunks(
+        keys,
+        marks => `INSERT OR IGNORE INTO synced (key) VALUES ${marks}`,
+        '(?)',
+      );
+      this.markSent(keys);
+    });
+  }
+
+  syncedCount(): number {
+    const { rows } = this.db.executeSync('SELECT COUNT(*) AS n FROM synced');
+    return Number(rows[0]?.n ?? 0);
+  }
+
+  // When the link went down (ISO), or null while it is up.
+  getLosSince(): string | null {
+    const { rows } = this.db.executeSync(
+      'SELECT los_since FROM link_clock WHERE id = 1',
+    );
+    const v = rows[0]?.los_since;
+    return typeof v === 'string' ? v : null;
+  }
+
+  setLosSince(iso: string | null): void {
+    this.db.executeSync(
+      'INSERT INTO link_clock (id, los_since) VALUES (1, ?) ON CONFLICT(id) DO UPDATE SET los_since = excluded.los_since',
+      [iso],
+    );
+  }
+
   bumpAttempts(keys: string[]): void {
     this.inChunks(
       keys,
@@ -78,8 +130,10 @@ export class SqliteOutboxStore implements OutboxStore {
   }
 
   // Demo reset only. Real black-box entries are never deleted before the ground has them.
+  // Also forgets the synced keys, so the demo's history is queued (and counted) again.
   clear(): void {
     this.db.executeSync('DELETE FROM outbox');
+    this.db.executeSync('DELETE FROM synced');
   }
 
   // Runs many writes as one transaction: one disk commit instead of one per row.
@@ -94,10 +148,14 @@ export class SqliteOutboxStore implements OutboxStore {
     }
   }
 
-  private inChunks(keys: string[], sql: (marks: string) => string): void {
+  private inChunks(
+    keys: string[],
+    sql: (marks: string) => string,
+    mark = '?',
+  ): void {
     for (let i = 0; i < keys.length; i += CHUNK) {
       const chunk = keys.slice(i, i + CHUNK);
-      this.db.executeSync(sql(chunk.map(() => '?').join(', ')), chunk);
+      this.db.executeSync(sql(chunk.map(() => mark).join(', ')), chunk);
     }
   }
 }

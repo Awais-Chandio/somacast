@@ -12,7 +12,7 @@ Body weather for crews beyond Earth: Somacast learns each crew member's own norm
 
 ## Summary
 
-On a crewed Mars mission the flight surgeon is on Earth. Messages take up to about 20 minutes each way, and near solar conjunction the link can be disrupted for two to three weeks. Somacast runs on the crew's phone without a network. It learns each crew member's own baseline for sleep, heart rate, HRV, exercise, mood, cabin CO2 and radiation, flags changes that persist, and forecasts the next 72 hours as Clear, Cloudy or Storm, always with the reason. During a blackout a black-box log keeps every entry. When the link returns, the backlog syncs with zero duplicates and the flight surgeon gets an SBAR handoff with evidence, then can send a note back. An Earth mode rewords the same engine for remote teams on Earth. All vitals are simulated. Somacast is decision support, not a medical device.
+On a crewed Mars mission the flight surgeon is on Earth. Messages take up to about 22 minutes each way, and near solar conjunction the link can be disrupted for two to three weeks. Somacast runs on the crew's phone without a network. It learns each crew member's own baseline for sleep, heart rate, HRV, exercise, mood, cabin CO2 and radiation, flags changes that persist, and forecasts the next 72 hours as Clear, Cloudy or Storm, always with the reason. During a blackout a black-box log keeps every entry. When the link returns, the backlog syncs with zero duplicates and the flight surgeon gets an SBAR handoff with evidence, then can send a note back. An Earth mode rewords the same engine for remote teams on Earth. All vitals are simulated. Somacast is decision support, not a medical device.
 
 ## How it addresses the challenge
 
