@@ -20,6 +20,6 @@ The baseline is frozen on purpose. A rolling baseline follows a slow decline and
 | --- | --- |
 | Normal days, crew-days with any alert (30 seeds) | about 0.1% |
 | Normal days, forecast not Clear (15 seeds) | about 1.6%, never Storm |
-| Blackout decline (starts day 45), first Storm for C2 (10 seeds) | day 58 to 72 |
+| Blackout decline (starts day 45), first Storm for C2 (10 seeds) | day 56 to 64 |
 | Blackout, healthy crew C1 | Cloudy from shared cabin CO2, never Storm |
 | Solar storm, radiation alert | every crew member on day 62, gone by day 70 |

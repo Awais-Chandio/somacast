@@ -23,23 +23,37 @@ The engine in `packages/core` is plain TypeScript with no network and no LLM. Th
 
 ## Quick start
 
-Install once:
+You need Node.js 22.11 or newer, JDK 17, and the Android SDK with an emulator already running (or a phone with USB debugging). See the React Native [environment setup](https://reactnative.dev/docs/set-up-your-environment) for Android. The app is Android only for now.
+
+Install once, from the repo root:
 
 ```bash
+npm ci                            # root: Supabase client and CLI, used by rls-check and db:push
 (cd packages/core && npm ci)
 (cd apps/mobile && npm ci)
 (cd apps/web && npm ci)
 ```
 
+npm may print `install-scripts ... not yet covered by allowScripts` warnings. They are safe to ignore: the build and all tests pass without those scripts.
+
 Run from the repo root:
 
 ```bash
 npm start         # Metro bundler (keep this terminal open)
-npm run android   # in a second terminal: build and launch on Android
-npm run web       # ground console (needs apps/web/.env, see apps/web/.env.example)
+npm run android   # in a second terminal: build and launch on Android (first build takes a few minutes)
 ```
 
-On the sign-in screen, **Continue offline** runs the whole phone demo without a backend. React Native commands such as `npx react-native run-android` only work inside `apps/mobile`, not at the repo root.
+On the sign-in screen, **Continue offline** runs the whole phone demo without a backend; no `.env` is needed. React Native commands such as `npx react-native run-android` only work inside `apps/mobile`, not at the repo root.
+
+The sync to Earth and the ground console need a Supabase project:
+
+```bash
+cp apps/mobile/.env.example apps/mobile/.env   # phone: Supabase URL + anon key
+cp apps/web/.env.example apps/web/.env         # console: same URL + anon key
+npm run web                                    # ground console at http://localhost:5173
+```
+
+The phone reads its `.env` at bundle time, so after creating or editing it restart Metro with `npm start -- --reset-cache`. Without `apps/web/.env` the console only shows "Supabase is not configured"; it has no offline mode. Demo accounts: [supabase/seed-users.md](supabase/seed-users.md).
 
 ## How to verify
 
@@ -51,6 +65,18 @@ npm run rls-check   # live Supabase: 17 checks that each user sees and writes on
 `rls-check` needs `apps/mobile/.env` (Supabase URL and anon key) and `scripts/.env` (demo passwords); see [supabase/seed-users.md](supabase/seed-users.md). It never uses the service-role key and writes only to the test crew `ZZ-TEST`.
 
 Each requirement, the test or demo step that checks it, and its honest status: [docs/verification.md](docs/verification.md).
+
+### Engine backtest (simulated data only)
+
+The engine has only been checked against its own simulator: 4 crew, 90 days, scored from day 30. These are not clinical results. Rules and thresholds: [docs/engine.md](docs/engine.md); the bounds are enforced in `packages/core/src/engine/engine.test.ts`.
+
+| Check | Result |
+| --- | --- |
+| False alerts: normal days, crew-days with any alert (30 seeds) | about 0.1% (7 of 7,200) |
+| False not-Clear: normal days, forecast Cloudy or Storm (15 seeds) | about 1.6% (29 of 1,800), never Storm |
+| First Storm: blackout decline starts day 45, crew C2 (10 seeds) | day 56 to 64 |
+| Blackout, healthy crew C1 | Cloudy from shared cabin CO2, never Storm |
+| Solar storm, radiation alert | every crew member on day 62, gone by day 70 |
 
 ## Limitations
 

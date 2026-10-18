@@ -20,7 +20,7 @@ On a crewed Mars mission the flight surgeon is on Earth. Messages take up to abo
 | --- | --- |
 | Monitor crew health | A personal baseline per crew member and metric; an alert when a metric stays past z = 2 for 3 days in a row (illustrative thresholds). |
 | See problems coming | A 72-hour forecast (Clear, Cloudy, Storm) from active alerts and short-term trends, marked "low confidence" when data is thin. |
-| Work without Earth | The engine, forecast, black box and handoff all run on the phone with no backend (tested; an airplane-mode run on a real phone is not yet recorded). A SQLite black box keeps readings, alerts and actions during loss of signal. |
+| Work without Earth | The engine, forecast, black box and handoff all run on the phone with no backend (tested, and recorded in airplane mode on the Android emulator; not yet on a real phone). A SQLite black box keeps readings, alerts and actions during loss of signal. |
 | Hand off to the ground | At acquisition of signal the backlog syncs in batches with idempotency keys (a 5,000-item backlog test lands with no duplicates), and an SBAR handoff with evidence goes to the flight surgeon's console. |
 | Explain every alert | Each alert carries metric, value, usual value, z-score, days and a plain-English reason. No black box in the logic. |
 | Keep the doctor in charge | Suggestions are behaviour and scheduling only, never medication, and labelled "illustrative, expert review required". The flight surgeon decides and can uplink a note. |
