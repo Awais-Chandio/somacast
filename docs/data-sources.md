@@ -12,4 +12,25 @@ Somacast uses **simulated** crew vitals. Real daily astronaut heart rate and HRV
 | Resting HR, HRV, exercise minutes, radiation baseline, psych check-in | see `packages/core/src/domain/metrics.ts` | Guess | Illustrative, expert review required |
 | Solar particle events | illustrative spike on days 60 to 62 | Not yet sourced | NASA DONKI SEP is planned: `packages/core/scripts/fetch-donki.mjs` exists, but no DONKI data has been fetched or used yet |
 
+## NASA OSDR (context, not used as input)
+
+NASA's Open Science Data Repository (OSDR) hosts datasets from the Inspiration4 mission (source: https://www.nasa.gov/osdr-latest-news-i4-mission-datasets/):
+
+| Dataset | Sample type |
+| --- | --- |
+| OSD-569 | Whole blood |
+| OSD-570 | PBMCs |
+| OSD-571 | Plasma |
+| OSD-575 | Serum |
+| OSD-572 | Skin, oral and nasal swabs |
+| OSD-573 | Dragon capsule swabs |
+| OSD-574 | Skin biopsies |
+| OSD-630 | Stool |
+| OSD-656 | Urine |
+| OSD-687 | T-cells |
+
+Related: the Space Omics and Medical Atlas (SOMA) publication package (source: https://www.nasa.gov/osdr-latest-news-soma-publications).
+
+These are lab and omics datasets, not daily vitals, so Somacast does not ingest them. They inform the Gap rows (immune, bone) in [nasa-risk-map.md](nasa-risk-map.md) and future work.
+
 Somacast is decision support, not a medical device. Thresholds are illustrative and need expert review.

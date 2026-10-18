@@ -111,9 +111,14 @@ apps/web/src/               Ground console for flight surgeons (React + Vite), s
   shared/                   Shell (SIMULATED DATA badge, footer), weather status, formatting
 ```
 
+## Science and data
+
+- [NASA hazard and risk map](docs/nasa-risk-map.md): which NASA human spaceflight risks Somacast tracks a related signal for, and where the gaps are.
+- [Data sources](docs/data-sources.md): what is published, what is simulated, what is a guess.
+
 ## Docs
 
-[ConOps](docs/conops.md) · [Requirements](docs/requirements.md) · [Engine](docs/engine.md) · [Verification](docs/verification.md) · [Limitations](docs/limitations.md) · [Data sources](docs/data-sources.md) · [Earth mode](docs/earth-mode.md) · [Demo script](docs/demo-script.md) · [Submission draft](docs/submission-draft.md)
+[ConOps](docs/conops.md) · [Requirements](docs/requirements.md) · [Engine](docs/engine.md) · [Verification](docs/verification.md) · [Limitations](docs/limitations.md) · [Data sources](docs/data-sources.md) · [NASA risk map](docs/nasa-risk-map.md) · [Earth mode](docs/earth-mode.md) · [Demo script](docs/demo-script.md) · [Submission draft](docs/submission-draft.md)
 
 ---
 

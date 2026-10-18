@@ -52,6 +52,19 @@ Cost: $0 (free tiers, no paid APIs).
 
 Crew members (Maya, Kenji, Amara, Luis) and the flight surgeon (Daniel) are fictional. Full list with links: [data-sources.md](data-sources.md).
 
+## NASA Data
+
+Somacast is built around NASA's "Distance from Earth" hazard: when the link is gone, the crew still sees their health and the ground gets a structured handoff when it returns.
+
+| NASA source | Use | Status |
+| --- | --- | --- |
+| NASA Human Research Program hazards (https://www.nasa.gov/hrp/hazards) and risks (https://www.nasa.gov/hrp/risks) | Framework: each Somacast feature is mapped to a named NASA risk or hazard in [nasa-risk-map.md](nasa-risk-map.md) | Used |
+| ISS sleep figures (Barger et al. 2014) | Calibrates the simulated sleep | Used |
+| NASA OCHMO technical brief OCHMO-TB-004 (carbon dioxide) | Keeps simulated cabin CO2 inside the published range | Used |
+| NTRS 20220013418, "Communication Delays, Disruptions, and Blackouts for Crewed Mars Missions" (https://ntrs.nasa.gov/citations/20220013418) | Problem statement: delay and blackout | Used |
+| NASA DONKI space-weather events | Solar storm scenario | **Pending**, not used yet |
+| NASA OSDR Inspiration4 datasets and the SOMA publication package | Context for the immune and bone gaps and future work | Context only, not ingested |
+
 ## AI tools used
 
 - **Claude (Anthropic), through Claude Code**, helped write code and documentation, including this draft. Awais reviewed, ran and tested everything.
